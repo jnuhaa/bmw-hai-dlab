@@ -2,8 +2,6 @@
 
 Use this when you want **netailab.com** (or another hostname) to stay up **without your laptop**, using the same architecture you already validated: **Node** serves the built app + `/api/*` on **port 4173**, and **cloudflared** on the **same** VPS forwards the tunnel to `http://localhost:4173`.
 
-**Cheapest straightforward provider walkthrough (Hetzner):** [deploy-hetzner.md](./deploy-hetzner.md).
-
 **Domain-specific checklist (netailab.com):** [netailab.com.md](./netailab.com.md). Copy-paste systemd units: [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service), [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service).
 
 ## What you need
@@ -203,6 +201,7 @@ APP_DIR=/opt/playground PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-
 
 ## Related docs
 
+- [deploy-lightsail.md](./deploy-lightsail.md) — AWS Lightsail VM, then same steps as this doc.
 - [deploy-public-tunnel.md](./deploy-public-tunnel.md) — overview (why not static-only).
 - [cloudflare-tunnel.md](./cloudflare-tunnel.md) — local dev + tunnel to port 5173.
 - [deploy-cicd.md](./deploy-cicd.md) — optional GitHub Actions auto-deploy to VPS.

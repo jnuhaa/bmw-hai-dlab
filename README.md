@@ -164,7 +164,7 @@ Key files:
 
 **Local dev + tunnel:** Use a named Cloudflare Tunnel and point it to `http://localhost:5173` while `npm run dev` runs. See [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md).
 
-**Shareable link with APIs (Collab, extract, live capture):** Static uploads of `dist/` are not enough—you need a Node process running **`vite preview`** and the tunnel aimed at that port. See [docs/deploy-public-tunnel.md](docs/deploy-public-tunnel.md) (`npm run preview:public` on port **4173**). For a **small VPS** with systemd + cloudflared, see [docs/deploy-vps.md](docs/deploy-vps.md). Step-by-step on **Hetzner** (cheap): [docs/deploy-hetzner.md](docs/deploy-hetzner.md).
+**Shareable link with APIs (Collab, extract, live capture):** Static uploads of `dist/` are not enough—you need a Node process running **`vite preview`** and the tunnel aimed at that port. See [docs/deploy-public-tunnel.md](docs/deploy-public-tunnel.md) (`npm run preview:public` on port **4173**). For a **small VM** (e.g. **AWS Lightsail**: [docs/deploy-lightsail.md](docs/deploy-lightsail.md)) with systemd + cloudflared, see [docs/deploy-vps.md](docs/deploy-vps.md).
 
 **netailab.com (Gemini + ComfyUI + phone capture):** Follow [docs/netailab.com.md](docs/netailab.com.md) for DNS, Cloudflare Tunnel → `localhost:4173`, `.env` on the VPS, and verification. Systemd templates: [deploy/systemd/](deploy/systemd/). After deploy: `npm run verify:deploy` (or `PUBLIC_URL=https://your-domain.com npm run verify:deploy`).
 
