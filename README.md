@@ -167,3 +167,9 @@ Key files:
 **Shareable link with APIs (Collab, extract, live capture):** Static uploads of `dist/` are not enough—you need a Node process running **`vite preview`** and the tunnel aimed at that port. See [docs/deploy-public-tunnel.md](docs/deploy-public-tunnel.md) (`npm run preview:public` on port **4173**). For a **small VPS** with systemd + cloudflared, see [docs/deploy-vps.md](docs/deploy-vps.md).
 
 **netailab.com (Gemini + ComfyUI + phone capture):** Follow [docs/netailab.com.md](docs/netailab.com.md) for DNS, Cloudflare Tunnel → `localhost:4173`, `.env` on the VPS, and verification. Systemd templates: [deploy/systemd/](deploy/systemd/). After deploy: `npm run verify:deploy` (or `PUBLIC_URL=https://your-domain.com npm run verify:deploy`).
+
+**Operational helpers:**
+- VPS bootstrap: `npm run bootstrap:vps`
+- Repeatable VPS deploy + restart + health check: `npm run deploy:vps`
+- Optional API protection: set `API_SHARED_KEY` and pass it as `x-api-key` (or bearer token) to non-status `/api/*` routes.
+- Optional state persistence across restarts: set `SERVER_STATE_DIR=.runtime` (stores JSON snapshots for live-capture sessions and extraction jobs).

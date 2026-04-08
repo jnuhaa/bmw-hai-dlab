@@ -18,6 +18,12 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y git curl ca-certificates build-essential
 ```
 
+Or run the repo bootstrap helper:
+
+```bash
+bash scripts/bootstrap-vps.sh
+```
+
 Create a deploy user (optional but recommended):
 
 ```bash
@@ -181,6 +187,12 @@ npm run build
 sudo systemctl restart playground-preview
 ```
 
+Or use the repo deploy helper:
+
+```bash
+APP_DIR=/opt/playground PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-update.sh
+```
+
 ## 10. Verification
 
 - On the VPS: `curl -sS http://127.0.0.1:4173/api/canvas/status`
@@ -191,3 +203,4 @@ sudo systemctl restart playground-preview
 
 - [deploy-public-tunnel.md](./deploy-public-tunnel.md) — overview (why not static-only).
 - [cloudflare-tunnel.md](./cloudflare-tunnel.md) — local dev + tunnel to port 5173.
+- [deploy-cicd.md](./deploy-cicd.md) — optional GitHub Actions auto-deploy to VPS.

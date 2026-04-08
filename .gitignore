@@ -5,6 +5,9 @@
 node_modules/
 dist/
 
+# Server JSON state snapshots (see SERVER_STATE_DIR in .env.example)
+.runtime/
+
 .DS_Store
 
 *.tsbuildinfo

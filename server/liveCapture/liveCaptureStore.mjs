@@ -1,5 +1,20 @@
-const sessions = new Map();
-let latestSessionId = null;
+import { readJsonState, writeJsonState } from "../shared/jsonStateStore.mjs";
+
+const persisted = readJsonState("liveCaptureSessions", {
+  latestSessionId: null,
+  sessions: [],
+});
+
+const sessions = new Map(Array.isArray(persisted.sessions) ? persisted.sessions : []);
+let latestSessionId =
+  typeof persisted.latestSessionId === "string" ? persisted.latestSessionId : null;
+
+function persistStore() {
+  writeJsonState("liveCaptureSessions", {
+    latestSessionId,
+    sessions: Array.from(sessions.entries()),
+  });
+}
 
 export function createSession() {
   const sessionId = Math.random().toString(36).slice(2, 10);
@@ -7,6 +22,7 @@ export function createSession() {
     captures: [],
   });
   latestSessionId = sessionId;
+  persistStore();
   return sessionId;
 }
 
@@ -39,6 +55,7 @@ export function addCapture(sessionId, imageUrl) {
   };
 
   session.captures.push(capture);
+  persistStore();
   return capture;
 }
 

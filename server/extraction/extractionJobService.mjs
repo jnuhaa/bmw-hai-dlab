@@ -1,12 +1,27 @@
 import { extractDesignIngredients } from "./extractionService.mjs";
+import { readJsonState, writeJsonState } from "../shared/jsonStateStore.mjs";
 
 const JOB_TTL_MS = 1000 * 60 * 30;
 const MAX_JOBS = 120;
 
-const extractionJobs = new Map();
-const queuedJobIds = [];
-const jobPayloadById = new Map();
+const persistedState = readJsonState("extractionJobs", {
+  jobs: [],
+  queuedJobIds: [],
+  payloads: [],
+});
+
+const extractionJobs = new Map(Array.isArray(persistedState.jobs) ? persistedState.jobs : []);
+const queuedJobIds = Array.isArray(persistedState.queuedJobIds) ? persistedState.queuedJobIds : [];
+const jobPayloadById = new Map(Array.isArray(persistedState.payloads) ? persistedState.payloads : []);
 let activeWorkerCount = 0;
+
+function persistState() {
+  writeJsonState("extractionJobs", {
+    jobs: Array.from(extractionJobs.entries()),
+    queuedJobIds,
+    payloads: Array.from(jobPayloadById.entries()),
+  });
+}
 
 function toIsoNow() {
   return new Date().toISOString();
@@ -45,6 +60,7 @@ function transitionJob(job, status) {
   job.status = status;
   appendLifecycle(job, status);
   job.updatedAt = toIsoNow();
+  persistState();
 }
 
 function refreshQueueMetadata() {
@@ -84,6 +100,7 @@ function trimJobs() {
     if (now - updatedAtMs > JOB_TTL_MS) {
       extractionJobs.delete(jobId);
       jobPayloadById.delete(jobId);
+      persistState();
     }
   });
 
@@ -100,6 +117,7 @@ function trimJobs() {
     extractionJobs.delete(jobId);
     jobPayloadById.delete(jobId);
   });
+  persistState();
 }
 
 async function runJob(generationJobId, payload) {
@@ -158,6 +176,7 @@ function pumpQueue() {
       pumpQueue();
     });
   }
+  persistState();
 }
 
 export function createExtractionJob(payload) {
@@ -199,6 +218,7 @@ export function createExtractionJob(payload) {
   });
   queuedJobIds.push(generationJobId);
   refreshQueueMetadata();
+  persistState();
   pumpQueue();
 
   return cloneJob(job);
@@ -213,4 +233,8 @@ export function getExtractionJob(generationJobId) {
   }
 
   return cloneJob(job);
+}
+
+if (queuedJobIds.length > 0) {
+  pumpQueue();
 }

@@ -42,9 +42,18 @@ Follow [deploy-vps.md](./deploy-vps.md) with working directory e.g. `/opt/playgr
 | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Converge Collab (server-side) |
 | `EXTRACTION_PROVIDER=comfyui` | Real extraction / stylize |
 | `COMFYUI_BASE_URL` | Must be reachable **from the VPS** (not your laptop). Use `https://cloud.comfy.org` + API key, or Comfy on the same VPS (`http://127.0.0.1:8188`): see [.env.example](../.env.example) |
-| `VITE_PUBLIC_APP_ORIGIN=https://netailab.com` | Optional; documents the public origin. |
+| `VITE_PUBLIC_APP_ORIGIN=https://netailab.com` | Set this in production for explicit origin consistency. |
+| `VITE_PHONE_CAPTURE_ORIGIN=https://netailab.com` | Recommended in production to keep QR/copy-link origin deterministic. |
 
 Rebuild after changing `VITE_*` vars: `npm run build` then restart `playground-preview`.
+
+Recommended `.env` core for production:
+
+```bash
+EXTRACTION_PROVIDER=comfyui
+VITE_PUBLIC_APP_ORIGIN=https://netailab.com
+VITE_PHONE_CAPTURE_ORIGIN=https://netailab.com
+```
 
 ## 4. Verification
 
@@ -90,3 +99,5 @@ Sessions are **in-memory**; restarting the Node process clears them.
 | Collab not configured | `GEMINI_API_KEY` in `.env` on VPS; rebuild/restart if needed. |
 | Comfy errors | From VPS: `COMFYUI_BASE_URL` reachable; Comfy Cloud key set if using cloud. |
 | Phone not syncing | Same origin on both devices; use the **QR or copied URL** from Curate (`/phone/<sessionId>`), not a mismatched tab. |
+| 401 on API calls | If `API_SHARED_KEY` is set, include `x-api-key` (or bearer token) for non-status endpoints. |
+| 429 rate limit | Increase `API_RATE_LIMIT_PER_MINUTE` or reduce burst traffic from one IP/path. |
