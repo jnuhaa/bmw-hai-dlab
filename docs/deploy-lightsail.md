@@ -6,6 +6,8 @@ This is the same architecture as [deploy-vps.md](./deploy-vps.md): a **small Lin
 
 **Domain + DNS:** [netailab.com.md](./netailab.com.md).
 
+**Ordered go-live checklist (checkboxes):** [lightsail-go-live-checklist.md](./lightsail-go-live-checklist.md).
+
 ---
 
 ## 1. Create a Lightsail instance
