@@ -2,6 +2,8 @@
 
 Use this when you want **netailab.com** (or another hostname) to stay up **without your laptop**, using the same architecture you already validated: **Node** serves the built app + `/api/*` on **port 4173**, and **cloudflared** on the **same** VPS forwards the tunnel to `http://localhost:4173`.
 
+**Cheapest straightforward provider walkthrough (Hetzner):** [deploy-hetzner.md](./deploy-hetzner.md).
+
 **Domain-specific checklist (netailab.com):** [netailab.com.md](./netailab.com.md). Copy-paste systemd units: [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service), [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service).
 
 ## What you need
