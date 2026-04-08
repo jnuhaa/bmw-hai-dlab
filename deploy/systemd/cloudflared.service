@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel (netailab.com -> localhost:4173)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/cloudflared.env
+# Token is expanded from the environment (JWT may contain "="; keep the file as KEY=value on one line).
+ExecStart=/bin/bash -c 'exec /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TUNNEL_TOKEN"'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

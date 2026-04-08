@@ -1,0 +1,17 @@
+[Unit]
+Description=Playground Vite preview (API + static)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/playground
+Environment=NODE_ENV=production
+# Vite loads .env from WorkingDirectory via vite.config.ts
+ExecStart=/opt/playground/node_modules/.bin/vite preview --host 0.0.0.0 --port 4173
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

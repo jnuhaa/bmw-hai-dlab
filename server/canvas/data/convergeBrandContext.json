@@ -1,0 +1,10 @@
+{
+  "stylizeAppend": "Premium German automotive design language: disciplined proportions, precise surfacing, confident stance, iconic light graphics, driver-centric clarity. Concept development and product-sketch quality—tangible materials (metal, glass, soft trim), believable panel gaps, design-studio visualization—not generic stock photography.",
+  "stylizeAppendExplicit": "BMW design vocabulary: athletic proportions, L-shaped light signatures, Hofmeister kink family cue where relevant, kidney grille discipline as appropriate to the concept; motorsport-informed precision; Munich studio–level presentation.",
+  "geminiCollabAppend": "Design context: premium automotive OEM studio—concept development, product sketch reasoning, concept-car visualization. Prefer disciplined surfacing language, clear hierarchy, and believable CMF over generic AI fluff.",
+  "geminiCollabAppendExplicit": "Explicit brand alignment: think BMW Group design studio—athletic stance, precise details, iconic lighting and proportion language where relevant.",
+  "geminiBrainstormAppend": "Same design studio context as Collab: automotive concept and product intent; build ideas that read as serious OEM design exploration.",
+  "geminiBrainstormAppendExplicit": "Frame contributions as BMW-relevant concept work when appropriate—premium, athletic, precise.",
+  "imagenAppend": "Premium automotive concept visualization, design-studio lighting, believable materials and scale, no watermarks.",
+  "imagenAppendExplicit": "BMW-style concept car or product sketch visualization, OEM design quality."
+}

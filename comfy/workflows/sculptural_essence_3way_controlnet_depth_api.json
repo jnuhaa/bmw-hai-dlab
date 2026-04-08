@@ -1,0 +1,281 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "dreamshaper_8.safetensors"
+    }
+  },
+  "50": {
+    "class_type": "LoraLoader",
+    "inputs": {
+      "model": ["1", 0],
+      "clip": ["1", 1],
+      "lora_name": "optional_lora.safetensors",
+      "strength_model": 0,
+      "strength_clip": 0
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input.png",
+      "upload": "image"
+    }
+  },
+  "3": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "2",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED — High-end generative design language: immersive systems, responsive environments; reinterpret form, texture, light, depth — not literal copy. Controlled abstraction, hierarchy, minimal staging, modular system feel. STRUCTURAL branch: computational morphology, continuous silhouette logic, spatial rhythm, mass and void, disciplined curvature, one dominant sculptural event, gallery staging, parametric flow, calm reduced palette, cool neutral and cobalt accents. Razor contours, readable shadows, museum composition. Non-representational. No isometric toy diagram, no literal cabin. {{USER_CONTEXT}}",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED — Same design-system principles. TACTILE branch: one coherent premium material family — translucent membranes, iridescent film, satin reflectivity, subsurface glow, layered depth, micro-modulation, refined tactile rhythm. Elegant surface continuity, specular break, path-traced lighting, strong micro-contrast. Cyan lime magenta accent glints. Sensory CMF study, non-representational. No soft jelly blob only, no random pattern stacking, no grunge, no seat screen dashboard. {{USER_CONTEXT}}",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED — Same design-system principles. ATMOSPHERIC branch: luminous spatial field, soft volumetric light, ambient gradients, exhibition-like emptiness, cinematic stillness, subtle depth layering, glass refraction and subtle caustics, teal cobalt over warm neutrals, HDR. Iridescent filaments, refractive curves, diagonal composition, negative space, one focal zone. Non-representational. No flat diffuse snapshot, no mushy blur-only dreamscape, no fantasy scenery. {{USER_CONTEXT}}",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "messy geometry, broken fragments, visual clutter, chaotic composition, creature-like form, low-quality diffusion noise, collage chaos, literal dashboard, steering wheel, seat, cabin, bathroom, toilet, kitchen, bedroom, stock interior photo, furniture catalog, realistic cockpit, screen UI, buttons, gauges, text, icons, app interface, smartphone mockup, photorealistic scene, recognizable product, muddy colors, harsh shadows, low poly, documentary photography, candid snapshot, stock photography, travel photo, real world location",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "dirty texture, grunge, random noise, coarse realism, cheap glossy CGI, cluttered materials, messy specular, literal dashboard, steering wheel, seat, bathroom tiles, fixtures, mirror, realistic room, furniture, product hero shot, hard silhouette, leather seat, realistic screen, text, typography, icons, website layout, photorealistic interior, noisy diffusion, amateur render, photojournalism, architectural documentation photo, street photography",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "9": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "fantasy scene, literal landscape, blurry mush, overbuilt environment, narrative illustration, visual clutter, cinematic excess, noisy background, readable text, logos, UI mockup, app screen, dashboard layout, flat snapshot lighting, deep focus documentary, harsh flash, cluttered realistic room, architectural stock photo, explicit product, clipart illustration, flat mobile UI art, watercolor mush only, mushy pastel soup, low contrast fog only, watermark, deformed hands, human face, car interior photo, oversharpened, jpeg artifacts, muddy contrast, heavy noise, documentary realism, hyperreal vacation snap",
+      "clip": [
+        "50",
+        1
+      ]
+    }
+  },
+  "10": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 444444444,
+      "steps": 32,
+      "cfg": 6.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.8,
+      "model": [
+        "50",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "11": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 555555555,
+      "steps": 30,
+      "cfg": 6.5,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.86,
+      "model": [
+        "50",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 666666666,
+      "steps": 34,
+      "cfg": 5.6,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.92,
+      "model": [
+        "50",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "10",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "14": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "15": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "16": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "sculptural_essence/spatial",
+      "images": [
+        "19",
+        0
+      ]
+    }
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "sculptural_essence/tactile",
+      "images": [
+        "20",
+        0
+      ]
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "sculptural_essence/experiential",
+      "images": [
+        "21",
+        0
+      ]
+    }
+  },
+  "19": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "13",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  },
+  "20": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "14",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  },
+  "21": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  }
+}

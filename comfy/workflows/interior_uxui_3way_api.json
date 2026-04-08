@@ -1,0 +1,320 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "dreamshaper_8.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input.png",
+      "upload": "image"
+    }
+  },
+  "3": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "2",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED INTERFACE — Responsive environment and display logic: generative floor mesh, projection field, data trails and kinetic light as subject; reflective ground unifying one luminous volume; HUD-like glow without readable app chrome or literal UI; interface hierarchy suggested by light layers only; electric cyan coral accents; soft volumetric fog, ethereal bloom; cyber-physical, modular, system-driven composition; high-end cinematic finish; non-literal, not glassmorphism product viz",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED INSTALLATION — Immersive hall or corner scale: volumetric cyan magenta wash, vertical light columns or scanlines, biomorphic volume with inner glow, deep obsidian ground; fluid floor projections against rigid grids; thin neon accents; figures only as anonymous distant blur or silhouette for scale; light-as-material; cinematic wide composition, ethereal haze, museum-tech immersion; modular spatial system; not domestic stock, not empty white lab, not daylight cozy interior",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD-ALIGNED WEARABLE — Body-scale light system: chrome mesh halos, collar wrist accents, projection mapped to posture; editorial minimal styling; rim chiaroscuro; profile or crop without eyes; soft bokeh on skin; hands obscured or motion-blurred; gesture and light-on-body as modular design subject, not catalog product, not isometric, not room documentation, not beauty headshot",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "visual clutter, chaotic fragmentation, messy composition, generic AI noise, literal car dashboard steering wheel seat cabin, domestic bathroom kitchen bedroom dining, hotel lobby real estate staging IKEA, daylight cozy home, stock interior magazine spread, outdoor street nature landscape, empty white cyclorama without projection, static white gallery without digital light, minimalist white laboratory, high-key sterile void alone, isometric product hero, ecommerce furniture catalog, glassmorphism floating UI panel, frosted CMF ball study only, wax horror figure mangled anatomy",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "broken messy geometry, chaotic folds, clay foam board competition layout, floating primitives on seamless white, glossy white product sweep, sculptural mass hero object, material disk sample, leather sofa bed dining hero, bathroom tiles fixtures mirror, realistic monitor TV, wedding crowd selfie stadium, noisy amateur render, detailed recognizable portrait, crowd sharp faces mangled hands extra fingers, dirty grunge texture dominance",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "9": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "fantasy landscape, blurry mush, narrative illustration excess, legible paragraphs of text, logos, watermarks, literal smartphone app mockup, skeuomorphic dashboard readable icons, flat snapshot harsh flash, cluttered room documentation, architectural stock photo, oversharpened halos, heavy jpeg noise muddy contrast, sharp facial identity eyes eye contact, hero headshot beauty close-up, hyperreal skin portrait, smartphone selfie sharpness, deformed hands extra fingers, uncanny face, realtor listing photo, scandinavian home without projection tech, catalog white sweep lighting",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "22": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "FIELD GLOBAL IDENTITY — Generative design system for immersive space: darkness as ground, projection and emissive light as subject; neon cyan magenta accents; ethereal volumetric haze and bloom; reflective floor unifying field; light as structural and atmospheric material; humans only anonymous silhouette back-view or heavy motion blur, never sharp face or readable eyes; participatory environmental UX, responsive modular composition, high-end gallery tech-noir; controlled abstraction, clear hierarchy; never sterile white laboratory alone, never glassmorphism product panel, never seamless CMF ball study as sole subject",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "23": {
+    "class_type": "ConditioningCombine",
+    "inputs": {
+      "conditioning_1": [
+        "22",
+        0
+      ],
+      "conditioning_2": [
+        "4",
+        0
+      ]
+    }
+  },
+  "24": {
+    "class_type": "ConditioningCombine",
+    "inputs": {
+      "conditioning_1": [
+        "22",
+        0
+      ],
+      "conditioning_2": [
+        "5",
+        0
+      ]
+    }
+  },
+  "25": {
+    "class_type": "ConditioningCombine",
+    "inputs": {
+      "conditioning_1": [
+        "22",
+        0
+      ],
+      "conditioning_2": [
+        "6",
+        0
+      ]
+    }
+  },
+  "10": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 444444444,
+      "steps": 36,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.88,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "23",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "11": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 555555555,
+      "steps": 36,
+      "cfg": 7.8,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.9,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "24",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 666666666,
+      "steps": 38,
+      "cfg": 7.2,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.93,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "25",
+        0
+      ],
+      "negative": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "3",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "10",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "14": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "15": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "16": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "interior_uxui/interface",
+      "images": [
+        "19",
+        0
+      ]
+    }
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "interior_uxui/installation",
+      "images": [
+        "20",
+        0
+      ]
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "interior_uxui/wearable",
+      "images": [
+        "21",
+        0
+      ]
+    }
+  },
+  "19": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "13",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  },
+  "20": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "14",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  },
+  "21": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "scale_by": 2
+    }
+  }
+}
