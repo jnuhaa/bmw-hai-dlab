@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/playground}"
+APP_DIR="${APP_DIR:-/opt/bmw-hai-dlab}"
 APP_USER="${APP_USER:-deploy}"
 
 echo "[1/6] Installing base packages..."
@@ -36,7 +36,7 @@ fi
 
 echo "[6/6] Bootstrap complete."
 echo "Next:"
-echo "  1) Clone repo into ${APP_DIR}"
+echo "  1) Clone BMW HAI D. LAB repo into ${APP_DIR}"
 echo "  2) Create .env (chmod 600 .env)"
 echo "  3) npm ci && npm run build"
 echo "  4) Install systemd units from deploy/systemd/"

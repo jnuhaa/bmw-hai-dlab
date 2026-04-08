@@ -17,7 +17,7 @@ This is the same architecture as [deploy-vps.md](./deploy-vps.md): a **small Lin
 3. **Platform:** Linux/Unix.
 4. **Blueprint:** **OS only** → **Ubuntu 22.04 LTS** or **24.04 LTS** (recommended).
 5. **Instance plan:** **1 GB RAM / 1 vCPU** is enough for this demo stack; 2 GB is comfortable if budget allows.
-6. **Identify your instance:** name it e.g. `playground-netailab`.
+6. **Identify your instance:** name it e.g. `bmw-hai-dlab-netailab`.
 7. **SSH key:** create or select a key pair; download the private key if new (`.pem`). You need it to SSH as `ubuntu` (default user on Ubuntu blueprints).
 
 Create the instance and wait until it is **Running**.
@@ -61,7 +61,7 @@ If you use the browser-based SSH in Lightsail, that works too; for `scp` of `.en
 
 [deploy-vps.md](./deploy-vps.md) assumes a **`deploy`** user. On Lightsail you start as **`ubuntu`**. Either:
 
-- Run the bootstrap as `ubuntu` and use `/opt/playground` owned by `ubuntu`, **or**
+- Run the bootstrap as `ubuntu` and use `/opt/bmw-hai-dlab` owned by `ubuntu`, **or**
 - Create `deploy` as in deploy-vps and copy your workflow there.
 
 The systemd units in [deploy/systemd/](../deploy/systemd/) use `User=deploy` — change `User=` to `ubuntu` if you skip creating `deploy`.
@@ -70,7 +70,7 @@ The systemd units in [deploy/systemd/](../deploy/systemd/) use `User=deploy` —
 
 ## 6. App + tunnel (same as generic VPS)
 
-1. Copy [deploy-vps.md](./deploy-vps.md) from **Server baseline** through **systemd** for `playground-preview` and `cloudflared`.
+1. Copy [deploy-vps.md](./deploy-vps.md) from **Server baseline** through **systemd** for `bmw-hai-dlab-preview` and `cloudflared`.
 2. Put `CLOUDFLARE_TUNNEL_TOKEN` in `/etc/cloudflared.env` on the instance (see deploy-vps).
 3. In Cloudflare Zero Trust, tunnel **Public hostname** → **`http://localhost:4173`** (on **this** Lightsail VM).
 4. **Stop** any tunnel using the same token on your laptop so only one connector runs.

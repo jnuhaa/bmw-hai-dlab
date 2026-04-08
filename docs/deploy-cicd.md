@@ -8,7 +8,7 @@ This repo includes [.github/workflows/deploy-vps.yml](../.github/workflows/deplo
 - `VPS_USER` — SSH user (for example `deploy`)
 - `VPS_SSH_KEY` — private key content used by GitHub Actions
 - `VPS_PORT` — optional; defaults to `22`
-- `VPS_APP_DIR` — optional; defaults to `/opt/playground`
+- `VPS_APP_DIR` — optional; defaults to `/opt/bmw-hai-dlab`
 - `PUBLIC_URL` — optional; defaults to `https://netailab.com`
 
 ## First-time setup checklist
@@ -16,7 +16,7 @@ This repo includes [.github/workflows/deploy-vps.yml](../.github/workflows/deplo
 1. Make sure the VPS already has this repo checked out and can run:
    - `npm ci`
    - `npm run build`
-   - `sudo systemctl restart playground-preview`
+   - `sudo systemctl restart bmw-hai-dlab-preview`
 2. Ensure your SSH user can restart the service (typically passwordless sudo for that user).
 3. Add the secrets listed above in GitHub repository settings.
 4. Trigger the workflow manually once from **Actions**.
@@ -26,11 +26,11 @@ This repo includes [.github/workflows/deploy-vps.yml](../.github/workflows/deplo
 On the VPS:
 
 ```bash
-cd /opt/playground
+cd /opt/bmw-hai-dlab
 git log --oneline -n 5
 git checkout <last-known-good-commit>
 npm ci
 npm run build
-sudo systemctl restart playground-preview
+sudo systemctl restart bmw-hai-dlab-preview
 PUBLIC_URL=https://netailab.com bash scripts/verify-public-deploy.sh
 ```

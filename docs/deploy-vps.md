@@ -2,7 +2,7 @@
 
 Use this when you want **netailab.com** (or another hostname) to stay up **without your laptop**, using the same architecture you already validated: **Node** serves the built app + `/api/*` on **port 4173**, and **cloudflared** on the **same** VPS forwards the tunnel to `http://localhost:4173`.
 
-**Domain-specific checklist (netailab.com):** [netailab.com.md](./netailab.com.md). Copy-paste systemd units: [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service), [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service).
+**Domain-specific checklist (netailab.com):** [netailab.com.md](./netailab.com.md). Copy-paste systemd units: [deploy/systemd/bmw-hai-dlab-preview.service](../deploy/systemd/bmw-hai-dlab-preview.service), [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service).
 
 ## What you need
 
@@ -45,9 +45,9 @@ node -v   # should be v20.x
 ## 3. Clone the app and install dependencies
 
 ```bash
-sudo mkdir -p /opt/playground
-sudo chown deploy:deploy /opt/playground
-cd /opt/playground
+sudo mkdir -p /opt/bmw-hai-dlab
+sudo chown deploy:deploy /opt/bmw-hai-dlab
+cd /opt/bmw-hai-dlab
 git clone <YOUR_REPO_URL> .
 npm ci
 ```
@@ -97,25 +97,25 @@ On the VPS, `localhost:4173` means “the Vite preview bound on this VPS,” not
 
 ## 7. systemd: keep preview and tunnel running
 
-### `/etc/systemd/system/playground-preview.service`
+### `/etc/systemd/system/bmw-hai-dlab-preview.service`
 
-Adjust `User` and `WorkingDirectory` if you did not use `/opt/playground`.
+Adjust `User` and `WorkingDirectory` if you did not use `/opt/bmw-hai-dlab`.
 
-The same unit file is kept in the repo as [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service) for easy `scp` or copy-paste.
+The same unit file is kept in the repo as [deploy/systemd/bmw-hai-dlab-preview.service](../deploy/systemd/bmw-hai-dlab-preview.service) for easy `scp` or copy-paste.
 
 ```ini
 [Unit]
-Description=Playground Vite preview (API + static)
+Description=BMW HAI D. LAB — Vite preview (API + static)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=deploy
-WorkingDirectory=/opt/playground
+WorkingDirectory=/opt/bmw-hai-dlab
 Environment=NODE_ENV=production
 # Vite loads .env from WorkingDirectory via vite.config.ts
-ExecStart=/opt/playground/node_modules/.bin/vite preview --host 0.0.0.0 --port 4173
+ExecStart=/opt/bmw-hai-dlab/node_modules/.bin/vite preview --host 0.0.0.0 --port 4173
 Restart=always
 RestartSec=5
 
@@ -127,8 +127,8 @@ Reload and enable:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now playground-preview
-sudo systemctl status playground-preview
+sudo systemctl enable --now bmw-hai-dlab-preview
+sudo systemctl status bmw-hai-dlab-preview
 ```
 
 ### `/etc/systemd/system/cloudflared.service`
@@ -144,8 +144,8 @@ The same unit file is kept in the repo as [deploy/systemd/cloudflared.service](.
 
 ```ini
 [Unit]
-Description=Cloudflare Tunnel
-After=network-online.target
+Description=Cloudflare Tunnel (netailab.com -> localhost:4173)
+After=network-online.target bmw-hai-dlab-preview.service
 Wants=network-online.target
 
 [Service]
@@ -166,7 +166,7 @@ sudo systemctl enable --now cloudflared
 sudo systemctl status cloudflared
 ```
 
-Ensure **playground-preview** starts **before** you rely on the tunnel (tunnel will get 502 if nothing listens on 4173). You can add `After=playground-preview.service` to `cloudflared.service` if you want ordering.
+Ensure **bmw-hai-dlab-preview** starts **before** you rely on the tunnel (tunnel will get 502 if nothing listens on 4173). The repo’s `cloudflared.service` uses `After=... bmw-hai-dlab-preview.service` for ordering.
 
 ## 8. Firewall
 
@@ -180,17 +180,17 @@ sudo ufw enable
 ## 9. Deploy updates
 
 ```bash
-cd /opt/playground
+cd /opt/bmw-hai-dlab
 git pull
 npm ci
 npm run build
-sudo systemctl restart playground-preview
+sudo systemctl restart bmw-hai-dlab-preview
 ```
 
 Or use the repo deploy helper:
 
 ```bash
-APP_DIR=/opt/playground PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-update.sh
+APP_DIR=/opt/bmw-hai-dlab PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-update.sh
 ```
 
 ## 10. Verification

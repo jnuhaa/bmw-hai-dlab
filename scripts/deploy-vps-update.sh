@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Deploy latest code on VPS and verify health.
 # Usage:
-#   APP_DIR=/opt/playground bash scripts/deploy-vps-update.sh
+#   APP_DIR=/opt/bmw-hai-dlab bash scripts/deploy-vps-update.sh
 
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/playground}"
-APP_SERVICE="${APP_SERVICE:-playground-preview}"
+APP_DIR="${APP_DIR:-/opt/bmw-hai-dlab}"
+APP_SERVICE="${APP_SERVICE:-bmw-hai-dlab-preview}"
 PUBLIC_URL="${PUBLIC_URL:-https://netailab.com}"
 
 echo "[1/6] Pulling latest code..."

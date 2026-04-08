@@ -29,9 +29,9 @@ Systemd unit templates: [deploy/systemd/](../deploy/systemd/).
 
 ## 2. VPS: Node + preview + cloudflared
 
-Follow [deploy-vps.md](./deploy-vps.md) with working directory e.g. `/opt/playground`.
+Follow [deploy-vps.md](./deploy-vps.md) with working directory e.g. `/opt/bmw-hai-dlab`.
 
-- Copy [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service) to `/etc/systemd/system/playground-preview.service` (adjust `User` / `WorkingDirectory`).
+- Copy [deploy/systemd/bmw-hai-dlab-preview.service](../deploy/systemd/bmw-hai-dlab-preview.service) to `/etc/systemd/system/bmw-hai-dlab-preview.service` (adjust `User` / `WorkingDirectory`).
 - Copy [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service) and put the token in `/etc/cloudflared.env` as documented in deploy-vps.
 - **Only one** `cloudflared` process should use the tunnel token (stop any local tunnel on your laptop before moving the VPS online).
 
@@ -45,7 +45,7 @@ Follow [deploy-vps.md](./deploy-vps.md) with working directory e.g. `/opt/playgr
 | `VITE_PUBLIC_APP_ORIGIN=https://netailab.com` | Set this in production for explicit origin consistency. |
 | `VITE_PHONE_CAPTURE_ORIGIN=https://netailab.com` | Recommended in production to keep QR/copy-link origin deterministic. |
 
-Rebuild after changing `VITE_*` vars: `npm run build` then restart `playground-preview`.
+Rebuild after changing `VITE_*` vars: `npm run build` then restart `bmw-hai-dlab-preview`.
 
 Recommended `.env` core for production:
 
@@ -95,7 +95,7 @@ Sessions are **in-memory**; restarting the Node process clears them.
 
 | Symptom | Check |
 |--------|--------|
-| 502 on public URL | `playground-preview` running? `curl` localhost:4173 on VPS. |
+| 502 on public URL | `bmw-hai-dlab-preview` running? `curl` localhost:4173 on VPS. |
 | Collab not configured | `GEMINI_API_KEY` in `.env` on VPS; rebuild/restart if needed. |
 | Comfy errors | From VPS: `COMFYUI_BASE_URL` reachable; Comfy Cloud key set if using cloud. |
 | Phone not syncing | Same origin on both devices; use the **QR or copied URL** from Curate (`/phone/<sessionId>`), not a mismatched tab. |

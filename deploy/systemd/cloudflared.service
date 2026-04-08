@@ -1,8 +1,7 @@
 [Unit]
 Description=Cloudflare Tunnel (netailab.com -> localhost:4173)
-After=network-online.target
+After=network-online.target bmw-hai-dlab-preview.service
 Wants=network-online.target
-After=playground-preview.service
 
 [Service]
 Type=simple

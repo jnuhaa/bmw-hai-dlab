@@ -86,7 +86,7 @@ Bundled workflows apply a **2× Lanczos** `ImageScaleBy` step after `VAEDecode` 
 ## One Prepared Workflow Template
 
 Default template path:
-- [comfy/workflows/extract-image-api.json](/Users/jnuha/Documents/Playground/comfy/workflows/extract-image-api.json)
+- [comfy/workflows/extract-image-api.json](comfy/workflows/extract-image-api.json)
 
 This is an API-format ComfyUI graph with one img2img path:
 - `LoadImage`
@@ -105,15 +105,15 @@ Frontend calls:
 - `GET /api/extract/:generationJobId` (poll job status)
 
 Backend flow:
-1. route validation in [server/extraction/extractRoute.mjs](/Users/jnuha/Documents/Playground/server/extraction/extractRoute.mjs)
-2. job lifecycle state in [server/extraction/extractionJobService.mjs](/Users/jnuha/Documents/Playground/server/extraction/extractionJobService.mjs)
-3. provider selection + fallback in [server/extraction/extractionService.mjs](/Users/jnuha/Documents/Playground/server/extraction/extractionService.mjs)
-4. Comfy execution in [server/extraction/comfyUiExtractionService.mjs](/Users/jnuha/Documents/Playground/server/extraction/comfyUiExtractionService.mjs)
+1. route validation in [server/extraction/extractRoute.mjs](server/extraction/extractRoute.mjs)
+2. job lifecycle state in [server/extraction/extractionJobService.mjs](server/extraction/extractionJobService.mjs)
+3. provider selection + fallback in [server/extraction/extractionService.mjs](server/extraction/extractionService.mjs)
+4. Comfy execution in [server/extraction/comfyUiExtractionService.mjs](server/extraction/comfyUiExtractionService.mjs)
 
 ## Where Injection Happens
 
 Workflow input injection happens in:
-- `prepareWorkflow(...)` inside [server/extraction/comfyUiExtractionService.mjs](/Users/jnuha/Documents/Playground/server/extraction/comfyUiExtractionService.mjs)
+- `prepareWorkflow(...)` inside [server/extraction/comfyUiExtractionService.mjs](server/extraction/comfyUiExtractionService.mjs)
 - which calls `injectWorkflowInputs(...)` in the same module
 
 Injected runtime values:
@@ -126,7 +126,7 @@ Injected runtime values:
 ## How Outputs Are Resolved
 
 After ComfyUI returns outputs, image URLs are resolved to `/view` endpoints in:
-- `toViewUrl(...)` inside [server/extraction/comfyUiExtractionService.mjs](/Users/jnuha/Documents/Playground/server/extraction/comfyUiExtractionService.mjs)
+- `toViewUrl(...)` inside [server/extraction/comfyUiExtractionService.mjs](server/extraction/comfyUiExtractionService.mjs)
 
 Base used for output URLs:
 - `COMFYUI_OUTPUT_BASE_URL` if set
@@ -146,11 +146,11 @@ Frontend linking is stored in asset state:
 - `childAssetIds` on source assets
 
 Key files:
-- [src/types/assets.ts](/Users/jnuha/Documents/Playground/src/types/assets.ts)
-- [src/types/extraction.ts](/Users/jnuha/Documents/Playground/src/types/extraction.ts)
-- [src/screens/CurateScreen.tsx](/Users/jnuha/Documents/Playground/src/screens/CurateScreen.tsx)
-- [src/components/SourceAssetPanel.tsx](/Users/jnuha/Documents/Playground/src/components/SourceAssetPanel.tsx)
-- [src/components/three/MemorySphere.tsx](/Users/jnuha/Documents/Playground/src/components/three/MemorySphere.tsx)
+- [src/types/assets.ts](src/types/assets.ts)
+- [src/types/extraction.ts](src/types/extraction.ts)
+- [src/screens/CurateScreen.tsx](src/screens/CurateScreen.tsx)
+- [src/components/SourceAssetPanel.tsx](src/components/SourceAssetPanel.tsx)
+- [src/components/three/MemorySphere.tsx](src/components/three/MemorySphere.tsx)
 
 ## Reliability Behavior
 

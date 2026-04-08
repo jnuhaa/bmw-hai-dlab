@@ -24,15 +24,15 @@ chmod 400 ~/path/to/your-key.pem
 ssh -i ~/path/to/your-key.pem ubuntu@YOUR_STATIC_IP
 ```
 
-- [ ] Decide **`ubuntu` only** vs **create `deploy` user** — systemd units use `User=deploy` by default ([deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service)); either create `deploy` + `/opt/playground` per [deploy-vps.md](./deploy-vps.md) or change `User=` to `ubuntu` in copied unit files.
+- [ ] Decide **`ubuntu` only** vs **create `deploy` user** — systemd units use `User=deploy` by default ([deploy/systemd/bmw-hai-dlab-preview.service](../deploy/systemd/bmw-hai-dlab-preview.service)); either create `deploy` + `/opt/bmw-hai-dlab` per [deploy-vps.md](./deploy-vps.md) or change `User=` to `ubuntu` in copied unit files.
 
 ---
 
 ## 3. App on the server
 
-- [ ] `sudo mkdir -p /opt/playground && sudo chown ubuntu:ubuntu /opt/playground` (or `deploy:deploy` if using deploy user).
+- [ ] `sudo mkdir -p /opt/bmw-hai-dlab && sudo chown ubuntu:ubuntu /opt/bmw-hai-dlab` (or `deploy:deploy` if using deploy user).
 - [ ] Clone repo: `git clone git@github.com:YOUR_ORG/YOUR_REPO.git .` (HTTPS + PAT also works).
-- [ ] Copy **`.env`** from your laptop: `scp -i key.pem .env ubuntu@IP:/opt/playground/.env` then `chmod 600 .env`.
+- [ ] Copy **`.env`** from your laptop: `scp -i key.pem .env ubuntu@IP:/opt/bmw-hai-dlab/.env` then `chmod 600 .env`.
 - [ ] Install Node 20 and deps — e.g. `bash scripts/bootstrap-vps.sh` or follow [deploy-vps.md](./deploy-vps.md) §2–3.
 - [ ] `npm ci` and `npm run build`.
 - [ ] Smoke test (temporary): `npx vite preview --host 0.0.0.0 --port 4173` then `curl -sS http://127.0.0.1:4173/api/canvas/status` — Ctrl+C when done.
@@ -41,11 +41,11 @@ ssh -i ~/path/to/your-key.pem ubuntu@YOUR_STATIC_IP
 
 ## 4. systemd (always-on)
 
-- [ ] Copy [deploy/systemd/playground-preview.service](../deploy/systemd/playground-preview.service) and [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service) to `/etc/systemd/system/`, adjusting `User` and `WorkingDirectory` if needed.
+- [ ] Copy [deploy/systemd/bmw-hai-dlab-preview.service](../deploy/systemd/bmw-hai-dlab-preview.service) and [deploy/systemd/cloudflared.service](../deploy/systemd/cloudflared.service) to `/etc/systemd/system/`, adjusting `User` and `WorkingDirectory` if needed.
 - [ ] Create `/etc/cloudflared.env` with `CLOUDFLARE_TUNNEL_TOKEN=...` (see [deploy-vps.md](./deploy-vps.md)); `chmod 600`.
 - [ ] `sudo systemctl daemon-reload`
-- [ ] `sudo systemctl enable --now playground-preview cloudflared`
-- [ ] `sudo systemctl status playground-preview cloudflared`
+- [ ] `sudo systemctl enable --now bmw-hai-dlab-preview cloudflared`
+- [ ] `sudo systemctl status bmw-hai-dlab-preview cloudflared`
 
 ---
 
@@ -59,9 +59,9 @@ ssh -i ~/path/to/your-key.pem ubuntu@YOUR_STATIC_IP
 
 ## 6. Production env (rebuild if you change `VITE_*`)
 
-- [ ] `GEMINI_API_KEY` (and Comfy vars if used) in `/opt/playground/.env`.
+- [ ] `GEMINI_API_KEY` (and Comfy vars if used) in `/opt/bmw-hai-dlab/.env`.
 - [ ] `VITE_PUBLIC_APP_ORIGIN=https://netailab.com` and `VITE_PHONE_CAPTURE_ORIGIN=https://netailab.com` if using that domain.
-- [ ] `npm run build` and `sudo systemctl restart playground-preview` after `VITE_*` changes.
+- [ ] `npm run build` and `sudo systemctl restart bmw-hai-dlab-preview` after `VITE_*` changes.
 
 ---
 
@@ -86,5 +86,5 @@ ssh -i ~/path/to/your-key.pem ubuntu@YOUR_STATIC_IP
 ## Acceptance
 
 - [ ] Site loads on phone and desktop with your laptop off.
-- [ ] `playground-preview` and `cloudflared` survive `sudo reboot`.
+- [ ] `bmw-hai-dlab-preview` and `cloudflared` survive `sudo reboot`.
 - [ ] `/api/canvas/status` returns JSON over HTTPS, not an HTML error page.

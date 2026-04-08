@@ -43,35 +43,35 @@ Or follow sections **1–3** of [deploy-vps.md](./deploy-vps.md) manually.
 
 Recommended layout:
 
-- App lives at **`/opt/playground`**
+- App lives at **`/opt/bmw-hai-dlab`**
 - Non-root user **`deploy`** owns the directory and can `sudo` for systemd installs
 
 Clone with the **HTTPS or SSH URL** of your GitHub repo:
 
 ```bash
-sudo mkdir -p /opt/playground
-sudo chown deploy:deploy /opt/playground
-sudo -u deploy -H bash -lc 'cd /opt/playground && git clone https://github.com/jnuhaa/bmw-hai-dlab.git .'
+sudo mkdir -p /opt/bmw-hai-dlab
+sudo chown deploy:deploy /opt/bmw-hai-dlab
+sudo -u deploy -H bash -lc 'cd /opt/bmw-hai-dlab && git clone https://github.com/jnuhaa/bmw-hai-dlab.git .'
 ```
 
 ## 4. Environment, build, smoke test
 
 ```bash
-sudo -u deploy -H bash -lc 'cd /opt/playground && npm ci && npm run build'
+sudo -u deploy -H bash -lc 'cd /opt/bmw-hai-dlab && npm ci && npm run build'
 ```
 
 Copy **`.env`** from your laptop (never commit it):
 
 ```bash
 # From your Mac:
-scp .env deploy@YOUR_SERVER_IP:/opt/playground/.env
-ssh deploy@YOUR_SERVER_IP 'chmod 600 /opt/playground/.env'
+scp .env deploy@YOUR_SERVER_IP:/opt/bmw-hai-dlab/.env
+ssh deploy@YOUR_SERVER_IP 'chmod 600 /opt/bmw-hai-dlab/.env'
 ```
 
 Set production-oriented values as needed (see [.env.example](../.env.example) and [netailab.com.md](./netailab.com.md)), then:
 
 ```bash
-sudo -u deploy -H bash -lc 'cd /opt/playground && npm run build'
+sudo -u deploy -H bash -lc 'cd /opt/bmw-hai-dlab && npm run build'
 ```
 
 ## 5. cloudflared + systemd
@@ -80,7 +80,7 @@ Follow **sections 5–7** of [deploy-vps.md](./deploy-vps.md):
 
 - Install `cloudflared` binary (use **`cloudflared-linux-amd64`** for standard Hetzner x86 servers).
 - Put the tunnel token in **`/etc/cloudflared.env`** (root-only, `chmod 600`).
-- Install **`playground-preview.service`** and **`cloudflared.service`** from [deploy/systemd/](../deploy/systemd/).
+- Install **`bmw-hai-dlab-preview.service`** and **`cloudflared.service`** from [deploy/systemd/](../deploy/systemd/).
 - **Stop** any tunnel on your Mac that uses the **same** token before enabling the VPS tunnel.
 
 ## 6. Cloudflare DNS and hostname
@@ -110,7 +110,7 @@ Or from the repo: `npm run verify:deploy` with `PUBLIC_URL=https://netailab.com`
 Use [deploy-vps.md](./deploy-vps.md) “Deploy updates” or:
 
 ```bash
-APP_DIR=/opt/playground PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-update.sh
+APP_DIR=/opt/bmw-hai-dlab PUBLIC_URL=https://netailab.com bash scripts/deploy-vps-update.sh
 ```
 
 (Optional CI: [deploy-cicd.md](./deploy-cicd.md).)
