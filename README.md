@@ -163,6 +163,6 @@ Key files:
 ## Deployment
 
 - Vercel deploy guide: [docs/deploy-vercel.md](docs/deploy-vercel.md)
-- Canonical production URL: `https://jnuhaa-bmw-hai-dlab.vercel.app`
+- Canonical production URL: `https://bmw-hai-dlab.vercel.app`
 - Optional API protection: set `API_SHARED_KEY` and pass it as `x-api-key` (or bearer token) to non-status `/api/*` routes.
 - Optional state persistence across restarts: set `SERVER_STATE_DIR=.runtime` (stores JSON snapshots for live-capture sessions and extraction jobs).
