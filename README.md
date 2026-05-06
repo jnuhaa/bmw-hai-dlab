@@ -33,7 +33,7 @@ npm run dev
 
 ### Local dev vs public URL / phone capture
 
-Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same dev server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5173`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. For a stable HTTPS URL on your LAN or for demos, use a Cloudflare Tunnel (or similar) and open that URL on both devices; see [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md). Production checklist: [docs/netailab.com.md](docs/netailab.com.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
+Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5173`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. Production checklist: [docs/netailab.com.md](docs/netailab.com.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
 
 ## Converge canvas (Collab / Stylize)
 
@@ -160,16 +160,9 @@ Key files:
   - with `COMFYUI_ALLOW_MOCK_FALLBACK=true`, backend falls back to mock output and includes `fallbackReason`.
 - If `EXTRACTION_PROVIDER=mock`, only mock path runs.
 
-## Stable Public Demo URL (Optional)
+## Deployment
 
-**Local dev + tunnel:** Use a named Cloudflare Tunnel and point it to `http://localhost:5173` while `npm run dev` runs. See [docs/cloudflare-tunnel.md](docs/cloudflare-tunnel.md).
-
-**Shareable link with APIs (Collab, extract, live capture):** Static uploads of `dist/` are not enough—you need a Node process running **`vite preview`** and the tunnel aimed at that port. See [docs/deploy-public-tunnel.md](docs/deploy-public-tunnel.md) (`npm run preview:public` on port **4173**). For a **small VM** (e.g. **AWS Lightsail**: [docs/deploy-lightsail.md](docs/deploy-lightsail.md)) with systemd + cloudflared, see [docs/deploy-vps.md](docs/deploy-vps.md).
-
-**netailab.com (Gemini + ComfyUI + phone capture):** Follow [docs/netailab.com.md](docs/netailab.com.md) for DNS, Cloudflare Tunnel → `localhost:4173`, `.env` on the VPS, and verification. Systemd templates: [deploy/systemd/](deploy/systemd/). After deploy: `npm run verify:deploy` (or `PUBLIC_URL=https://your-domain.com npm run verify:deploy`).
-
-**Operational helpers:**
-- VPS bootstrap: `npm run bootstrap:vps`
-- Repeatable VPS deploy + restart + health check: `npm run deploy:vps`
+- Vercel deploy guide: [docs/deploy-vercel.md](docs/deploy-vercel.md)
+- `netailab.com` domain + Cloudflare DNS/proxy notes: [docs/netailab.com.md](docs/netailab.com.md)
 - Optional API protection: set `API_SHARED_KEY` and pass it as `x-api-key` (or bearer token) to non-status `/api/*` routes.
 - Optional state persistence across restarts: set `SERVER_STATE_DIR=.runtime` (stores JSON snapshots for live-capture sessions and extraction jobs).
