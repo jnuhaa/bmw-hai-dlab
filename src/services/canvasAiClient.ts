@@ -112,7 +112,7 @@ function canvasHttpErrorMessage(res: Response, raw: string): string {
   if (looksLikeHtmlErrorPage(raw)) {
     return [
       `HTTP ${res.status} (HTML error page, not JSON)`,
-      "This hostname is not reaching the Node app that serves /api/canvas. Run npm run dev (5173) or npm run build && npm run preview:public (4173), set your Cloudflare Tunnel public hostname to http://localhost:4173 or :5173 on that same machine, and keep cloudflared running. Static-only hosting cannot serve these APIs.",
+      "This hostname is not reaching the Node app that serves /api/canvas. Run npm run dev (5174) or npm run build && npm run preview:public (4173), set your Cloudflare Tunnel public hostname to http://localhost:4173 or :5174 on that same machine, and keep cloudflared running. Static-only hosting cannot serve these APIs.",
     ].join(" — ");
   }
   const snippet = raw.replace(/\s+/g, " ").trim().slice(0, 280);

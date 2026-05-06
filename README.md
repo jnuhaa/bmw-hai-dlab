@@ -27,13 +27,13 @@ cp .env.example .env
 npm run dev
 ```
 
-4. Open **http://localhost:5173** in your browser (use the port Vite prints if 5173 is already in use).
+4. Open **http://localhost:5174** in your browser (use the port Vite prints if 5174 is already in use).
 
-**Gemini / Collab on your Mac (simplest):** Add `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) to `.env`, save, and restart `npm run dev`. No tunnel or VPS required. Optional: `curl -sS http://127.0.0.1:5173/api/canvas/status` — you should see `"collabConfigured": true`. Leave `VITE_REDIRECT_LOCAL_TO_PUBLIC` unset so you stay on localhost. If port 5173 is busy, run `npm run dev -- --port 5174` and use that URL.
+**Gemini / Collab on your Mac (simplest):** Add `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) to `.env`, save, and restart `npm run dev`. No tunnel or VPS required. Optional: `curl -sS http://127.0.0.1:5174/api/canvas/status` — you should see `"collabConfigured": true`. Leave `VITE_REDIRECT_LOCAL_TO_PUBLIC` unset so you stay on localhost.
 
 ### Local dev vs public URL / phone capture
 
-Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5173`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. Production checklist: [docs/netailab.com.md](docs/netailab.com.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
+Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5174`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. Production checklist: [docs/netailab.com.md](docs/netailab.com.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
 
 ## Converge canvas (Collab / Stylize)
 

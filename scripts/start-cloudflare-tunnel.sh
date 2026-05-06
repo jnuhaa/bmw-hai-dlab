@@ -23,6 +23,6 @@ if [ -z "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
   exit 1
 fi
 
-# Public hostname → service URL is configured in Cloudflare (e.g. http://localhost:5173 for dev, http://localhost:4173 for preview:public).
-echo "Starting named Cloudflare Tunnel (token from .env). Ensure the dashboard hostname points to the port you serve (5173 dev, 4173 preview:public)."
+# Public hostname → service URL is configured in Cloudflare (e.g. http://localhost:5174 for dev, http://localhost:4173 for preview:public).
+echo "Starting named Cloudflare Tunnel (token from .env). Ensure the dashboard hostname points to the port you serve (5174 dev, 4173 preview:public)."
 cloudflared tunnel --no-autoupdate run --token "${CLOUDFLARE_TUNNEL_TOKEN}"

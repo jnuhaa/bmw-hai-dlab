@@ -41,7 +41,7 @@ export function PhoneCaptureInvite({ phoneUrl, sessionId }: PhoneCaptureInvitePr
         {localhostQr ? (
           <p className="memory-sphere-phone-invite__warn" role="alert">
             This link points at <strong>localhost</strong> — your phone cannot reach your computer. Set{" "}
-            <code className="memory-sphere-phone-invite__code">VITE_PHONE_CAPTURE_ORIGIN=http://YOUR_LAN_IP:5173</code>{" "}
+            <code className="memory-sphere-phone-invite__code">VITE_PHONE_CAPTURE_ORIGIN=http://YOUR_LAN_IP:5174</code>{" "}
             in <code className="memory-sphere-phone-invite__code">.env</code> (same port as Vite), restart the dev server,
             or open the app on your PC using your LAN IP instead of localhost.
           </p>
