@@ -33,7 +33,7 @@ npm run dev
 
 ### Local dev vs public URL / phone capture
 
-Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5174`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. Production checklist: [docs/netailab.com.md](docs/netailab.com.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
+Phone relay uploads go to the same in-memory live-capture session as the Curate tab (`/api/live-capture`). The phone and desktop must use the **same origin** (same server process). On **Curate**, the **Phone capture** card shows a **QR code** and link to `https://<host>/phone/<sessionId>` so the phone pairs to your tab; opening bare `/phone` uses the server “latest” session only (weaker for multiple users). If you browse the app as **`http://localhost`**, the QR encodes localhost and **your phone cannot connect** — set **`VITE_PHONE_CAPTURE_ORIGIN=http://<your-LAN-IP>:5174`** in `.env` (see `.env.example`) or open the app using your computer’s LAN IP. Vercel deployment checklist: [docs/deploy-vercel.md](docs/deploy-vercel.md). Optional `VITE_PUBLIC_APP_ORIGIN` in `.env` does **not** redirect `localhost` unless you also set `VITE_REDIRECT_LOCAL_TO_PUBLIC=true`. If you enable that redirect, append `?local=1` to stay on localhost when needed.
 
 ## Converge canvas (Collab / Stylize)
 
@@ -163,6 +163,6 @@ Key files:
 ## Deployment
 
 - Vercel deploy guide: [docs/deploy-vercel.md](docs/deploy-vercel.md)
-- `netailab.com` domain + Cloudflare DNS/proxy notes: [docs/netailab.com.md](docs/netailab.com.md)
+- Canonical production URL: `https://jnuhaa-bmw-hai-dlab.vercel.app`
 - Optional API protection: set `API_SHARED_KEY` and pass it as `x-api-key` (or bearer token) to non-status `/api/*` routes.
 - Optional state persistence across restarts: set `SERVER_STATE_DIR=.runtime` (stores JSON snapshots for live-capture sessions and extraction jobs).

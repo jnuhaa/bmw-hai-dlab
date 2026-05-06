@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Verify public deployment: API returns JSON over HTTPS (not HTML error page).
-# Usage: PUBLIC_URL=https://netailab.com bash scripts/verify-public-deploy.sh
+# Usage: PUBLIC_URL=https://jnuhaa-bmw-hai-dlab.vercel.app bash scripts/verify-public-deploy.sh
 
 set -euo pipefail
 
-PUBLIC_URL="${PUBLIC_URL:-https://netailab.com}"
+PUBLIC_URL="${PUBLIC_URL:-https://jnuhaa-bmw-hai-dlab.vercel.app}"
 STATUS_PATH="/api/canvas/status"
 
 echo "Checking ${PUBLIC_URL}${STATUS_PATH} ..."

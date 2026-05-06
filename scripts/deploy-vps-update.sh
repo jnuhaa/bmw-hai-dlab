@@ -7,7 +7,7 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/bmw-hai-dlab}"
 APP_SERVICE="${APP_SERVICE:-bmw-hai-dlab-preview}"
-PUBLIC_URL="${PUBLIC_URL:-https://netailab.com}"
+PUBLIC_URL="${PUBLIC_URL:-https://jnuhaa-bmw-hai-dlab.vercel.app}"
 
 echo "[1/6] Pulling latest code..."
 cd "${APP_DIR}"
