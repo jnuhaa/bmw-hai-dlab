@@ -36,14 +36,14 @@ export function PhoneCaptureInvite({ phoneUrl, sessionId }: PhoneCaptureInvitePr
           Phone capture
         </span>
         <p className="memory-sphere-phone-invite__lede">
-          Scan or open this URL on your phone (HTTPS in production). Drag on the frame to crop and send.
+          Use this session-specific URL for reliable pairing. Scan or open it on your phone, then drag on the frame to crop and send.
         </p>
         {localhostQr ? (
           <p className="memory-sphere-phone-invite__warn" role="alert">
-            This link points at <strong>localhost</strong> — your phone cannot reach your computer. Set{" "}
+            This link points at <strong>localhost</strong>, so your phone cannot reach it. For local phone testing, set{" "}
             <code className="memory-sphere-phone-invite__code">VITE_PHONE_CAPTURE_ORIGIN=http://YOUR_LAN_IP:5174</code>{" "}
-            in <code className="memory-sphere-phone-invite__code">.env</code> (same port as Vite), restart the dev server,
-            or open the app on your PC using your LAN IP instead of localhost.
+            in <code className="memory-sphere-phone-invite__code">.env</code> and restart the dev server. For production,
+            set it to your public HTTPS app URL.
           </p>
         ) : null}
       </div>

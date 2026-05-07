@@ -13,6 +13,18 @@ export default function App() {
     import.meta.env.VITE_REDIRECT_LOCAL_TO_PUBLIC === "true";
 
   useEffect(() => {
+    const isRootPath = window.location.pathname === "/";
+    const forceDesktop = new URLSearchParams(window.location.search).get("desktop") === "1";
+    const looksLikeMobile = /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+
+    if (!isPhoneRoute && isRootPath && looksLikeMobile && !forceDesktop) {
+      setRedirecting(true);
+      window.location.replace("/phone");
+      return;
+    }
+  }, [isPhoneRoute]);
+
+  useEffect(() => {
     const isLocalHost =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
