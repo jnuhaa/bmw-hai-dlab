@@ -1,5 +1,5 @@
 import QRCode from "react-qr-code";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 
 type PhoneCaptureInviteProps = {
   phoneUrl: string;
@@ -15,9 +15,13 @@ function isLocalhostPhoneUrl(url: string): boolean {
   }
 }
 
-export function PhoneCaptureInvite({ phoneUrl, sessionId }: PhoneCaptureInviteProps) {
+export const PhoneCaptureInvite = memo(function PhoneCaptureInvite({
+  phoneUrl,
+  sessionId,
+}: PhoneCaptureInviteProps) {
   const [copied, setCopied] = useState(false);
   const localhostQr = isLocalhostPhoneUrl(phoneUrl);
+  const qrNode = useMemo(() => <QRCode value={phoneUrl} size={112} level="M" />, [phoneUrl]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -49,7 +53,7 @@ export function PhoneCaptureInvite({ phoneUrl, sessionId }: PhoneCaptureInvitePr
       </div>
       <div className="memory-sphere-phone-invite__row">
         <div className="memory-sphere-phone-invite__qr" aria-hidden>
-          <QRCode value={phoneUrl} size={112} level="M" />
+          {qrNode}
         </div>
         <div className="memory-sphere-phone-invite__actions">
           <code className="memory-sphere-phone-invite__url" title={phoneUrl}>
@@ -65,4 +69,4 @@ export function PhoneCaptureInvite({ phoneUrl, sessionId }: PhoneCaptureInvitePr
       </div>
     </div>
   );
-}
+});
