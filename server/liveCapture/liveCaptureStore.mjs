@@ -1,5 +1,6 @@
 import { readJsonState, writeJsonState } from "../shared/jsonStateStore.mjs";
 import { kv } from "@vercel/kv";
+import { createClient } from "redis";
 
 const persisted = readJsonState("liveCaptureSessions", {
   latestSessionId: null,
@@ -14,15 +15,56 @@ const hasKv = Boolean(
   process.env.KV_REST_API_URL?.trim() ||
     process.env.UPSTASH_REDIS_REST_URL?.trim(),
 );
+const storageRedisUrl = process.env.STORAGE_REDIS_URL?.trim() || "";
+const hasStorageRedis = storageRedisUrl.length > 0;
 
 const LATEST_KEY = "live-capture:latest";
 const sessionKey = (sessionId) => `live-capture:session:${sessionId}`;
+
+let redisClientPromise = null;
 
 function persistStore() {
   writeJsonState("liveCaptureSessions", {
     latestSessionId,
     sessions: Array.from(sessions.entries()),
   });
+}
+
+async function getStorageRedisClient() {
+  if (!hasStorageRedis) {
+    return null;
+  }
+  if (!redisClientPromise) {
+    const client = createClient({
+      url: storageRedisUrl,
+    });
+    redisClientPromise = client.connect().then(() => client);
+  }
+  return redisClientPromise;
+}
+
+async function storageRedisGetJson(key) {
+  const client = await getStorageRedisClient();
+  if (!client) {
+    return null;
+  }
+  const raw = await client.get(key);
+  if (typeof raw !== "string" || raw.length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function storageRedisSetJson(key, value) {
+  const client = await getStorageRedisClient();
+  if (!client) {
+    return;
+  }
+  await client.set(key, JSON.stringify(value));
 }
 
 async function kvGetJson(key) {
@@ -50,6 +92,14 @@ export async function createSession() {
     await kv.set(LATEST_KEY, sessionId);
     return sessionId;
   }
+  if (hasStorageRedis) {
+    await storageRedisSetJson(sessionKey(sessionId), {
+      captures: [],
+    });
+    const client = await getStorageRedisClient();
+    await client?.set(LATEST_KEY, sessionId);
+    return sessionId;
+  }
 
   sessions.set(sessionId, {
     captures: [],
@@ -73,6 +123,16 @@ export async function ensureSession(sessionId) {
     }
     return sessionId;
   }
+  if (hasStorageRedis) {
+    const key = sessionKey(sessionId);
+    const existing = await storageRedisGetJson(key);
+    if (!existing) {
+      await storageRedisSetJson(key, { captures: [] });
+      const client = await getStorageRedisClient();
+      await client?.set(LATEST_KEY, sessionId);
+    }
+    return sessionId;
+  }
 
   if (!sessions.has(sessionId)) {
     sessions.set(sessionId, { captures: [] });
@@ -86,6 +146,9 @@ export async function getSession(sessionId) {
   if (hasKv) {
     return await kvGetJson(sessionKey(sessionId));
   }
+  if (hasStorageRedis) {
+    return await storageRedisGetJson(sessionKey(sessionId));
+  }
   return sessions.get(sessionId) ?? null;
 }
 
@@ -94,17 +157,31 @@ export async function getLatestSessionId() {
     const latest = await kv.get(LATEST_KEY);
     return typeof latest === "string" && latest.length > 0 ? latest : null;
   }
+  if (hasStorageRedis) {
+    const client = await getStorageRedisClient();
+    const latest = await client?.get(LATEST_KEY);
+    return typeof latest === "string" && latest.length > 0 ? latest : null;
+  }
   return latestSessionId;
 }
 
 export function isSharedLiveCaptureStoreEnabled() {
-  return hasKv;
+  return hasKv || hasStorageRedis;
 }
 
 export async function resolveSessionId(sessionId) {
   if (hasKv) {
     if (sessionId) {
       const existing = await kvGetJson(sessionKey(sessionId));
+      if (existing) {
+        return sessionId;
+      }
+    }
+    return await getLatestSessionId();
+  }
+  if (hasStorageRedis) {
+    if (sessionId) {
+      const existing = await storageRedisGetJson(sessionKey(sessionId));
       if (existing) {
         return sessionId;
       }
@@ -134,6 +211,8 @@ export async function addCapture(sessionId, imageUrl) {
   session.captures.push(capture);
   if (hasKv) {
     await kvSetJson(sessionKey(sessionId), session);
+  } else if (hasStorageRedis) {
+    await storageRedisSetJson(sessionKey(sessionId), session);
   } else {
     persistStore();
   }
