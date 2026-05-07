@@ -4,6 +4,16 @@ import type {
   LiveCaptureUploadResponse,
 } from "../types/liveCapture";
 
+class LiveCaptureHttpError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "LiveCaptureHttpError";
+    this.status = status;
+  }
+}
+
 /** Session id from `/phone/:sessionId` or `?session=` on `/phone` (same origin as desktop). */
 export function getPhoneCaptureSessionIdFromLocation(): string | null {
   if (typeof window === "undefined") {
@@ -39,7 +49,7 @@ export async function pollLiveCaptureSession(sessionId: string, cursor: number) 
   );
 
   if (!response.ok) {
-    throw new Error("Unable to poll live capture session.");
+    throw new LiveCaptureHttpError("Unable to poll live capture session.", response.status);
   }
 
   return (await response.json()) as LiveCapturePollResponse;

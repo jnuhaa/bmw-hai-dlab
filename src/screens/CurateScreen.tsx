@@ -975,8 +975,18 @@ export function CurateScreen() {
         });
       } catch (error) {
         console.error(error);
-        // Keep the current session id on transient poll errors.
-        // Resetting here causes rapid session churn and stale phone QR links.
+        const is404 =
+          typeof error === "object" &&
+          error !== null &&
+          "status" in error &&
+          (error as { status?: number }).status === 404;
+
+        // Recover from stale/expired session ids by forcing one re-create.
+        // Keep current session for transient non-404 failures.
+        if (is404) {
+          activeLiveSessionIdRef.current = null;
+          setLiveCaptureSessionId(null);
+        }
       }
     }
 
