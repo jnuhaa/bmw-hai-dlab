@@ -52,7 +52,7 @@ export async function handleLiveCaptureRoute(req, res) {
   const pathname = normalizeLiveCapturePathname(requestUrl.pathname);
 
   if (pathname === "/session" && req.method === "POST") {
-    const sessionId = createSession();
+    const sessionId = await createSession();
     sendJson(res, 200, {
       sessionId,
       phonePath: "/phone",
@@ -66,16 +66,17 @@ export async function handleLiveCaptureRoute(req, res) {
     return;
   }
 
-  const resolvedSessionId = ensureSession(parsedPath.sessionId) ?? resolveSessionId(parsedPath.sessionId);
+  const resolvedSessionId =
+    (await ensureSession(parsedPath.sessionId)) ?? (await resolveSessionId(parsedPath.sessionId));
 
-  if (!resolvedSessionId || !getSession(resolvedSessionId)) {
+  if (!resolvedSessionId || !(await getSession(resolvedSessionId))) {
     sendJson(res, 404, { error: "Live capture session not found." });
     return;
   }
 
   if (!parsedPath.action && req.method === "GET") {
     const cursor = Number.parseInt(requestUrl.searchParams.get("cursor") ?? "0", 10);
-    const payload = getCapturesSince(resolvedSessionId, cursor);
+    const payload = await getCapturesSince(resolvedSessionId, cursor);
     sendJson(res, 200, {
       sessionId: resolvedSessionId,
       ...payload,
@@ -90,12 +91,12 @@ export async function handleLiveCaptureRoute(req, res) {
       return;
     }
 
-    const capture = addCapture(resolvedSessionId, payload.imageUrl);
+    const capture = await addCapture(resolvedSessionId, payload.imageUrl);
     sendJson(res, 200, {
       sessionId: resolvedSessionId,
       capture,
       usedFallbackSession: resolvedSessionId !== parsedPath.sessionId,
-      latestSessionId: getLatestSessionId(),
+      latestSessionId: await getLatestSessionId(),
     });
     return;
   }

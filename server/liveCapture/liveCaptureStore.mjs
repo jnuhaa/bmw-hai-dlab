@@ -9,6 +9,15 @@ const sessions = new Map(Array.isArray(persisted.sessions) ? persisted.sessions 
 let latestSessionId =
   typeof persisted.latestSessionId === "string" ? persisted.latestSessionId : null;
 
+const kvBaseUrl =
+  process.env.KV_REST_API_URL?.trim() || process.env.UPSTASH_REDIS_REST_URL?.trim() || "";
+const kvToken =
+  process.env.KV_REST_API_TOKEN?.trim() || process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || "";
+const hasKv = Boolean(kvBaseUrl && kvToken);
+
+const LATEST_KEY = "live-capture:latest";
+const sessionKey = (sessionId) => `live-capture:session:${sessionId}`;
+
 function persistStore() {
   writeJsonState("liveCaptureSessions", {
     latestSessionId,
@@ -16,8 +25,47 @@ function persistStore() {
   });
 }
 
-export function createSession() {
+async function kvCommand(...parts) {
+  const encoded = parts.map((part) => encodeURIComponent(String(part))).join("/");
+  const response = await fetch(`${kvBaseUrl}/${encoded}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${kvToken}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`KV command failed (${response.status})`);
+  }
+  const body = await response.json();
+  return body?.result ?? null;
+}
+
+async function kvGetJson(key) {
+  const raw = await kvCommand("get", key);
+  if (typeof raw !== "string" || raw.length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function kvSetJson(key, value) {
+  await kvCommand("set", key, JSON.stringify(value));
+}
+
+export async function createSession() {
   const sessionId = Math.random().toString(36).slice(2, 10);
+  if (hasKv) {
+    await kvSetJson(sessionKey(sessionId), {
+      captures: [],
+    });
+    await kvCommand("set", LATEST_KEY, sessionId);
+    return sessionId;
+  }
+
   sessions.set(sessionId, {
     captures: [],
   });
@@ -26,10 +74,21 @@ export function createSession() {
   return sessionId;
 }
 
-export function ensureSession(sessionId) {
+export async function ensureSession(sessionId) {
   if (typeof sessionId !== "string" || sessionId.length === 0) {
     return null;
   }
+
+  if (hasKv) {
+    const key = sessionKey(sessionId);
+    const existing = await kvGetJson(key);
+    if (!existing) {
+      await kvSetJson(key, { captures: [] });
+      await kvCommand("set", LATEST_KEY, sessionId);
+    }
+    return sessionId;
+  }
+
   if (!sessions.has(sessionId)) {
     sessions.set(sessionId, { captures: [] });
     latestSessionId = sessionId;
@@ -38,15 +97,32 @@ export function ensureSession(sessionId) {
   return sessionId;
 }
 
-export function getSession(sessionId) {
+export async function getSession(sessionId) {
+  if (hasKv) {
+    return await kvGetJson(sessionKey(sessionId));
+  }
   return sessions.get(sessionId) ?? null;
 }
 
-export function getLatestSessionId() {
+export async function getLatestSessionId() {
+  if (hasKv) {
+    const latest = await kvCommand("get", LATEST_KEY);
+    return typeof latest === "string" && latest.length > 0 ? latest : null;
+  }
   return latestSessionId;
 }
 
-export function resolveSessionId(sessionId) {
+export async function resolveSessionId(sessionId) {
+  if (hasKv) {
+    if (sessionId) {
+      const existing = await kvGetJson(sessionKey(sessionId));
+      if (existing) {
+        return sessionId;
+      }
+    }
+    return await getLatestSessionId();
+  }
+
   if (sessionId && sessions.has(sessionId)) {
     return sessionId;
   }
@@ -54,8 +130,8 @@ export function resolveSessionId(sessionId) {
   return latestSessionId;
 }
 
-export function addCapture(sessionId, imageUrl) {
-  const session = getSession(sessionId);
+export async function addCapture(sessionId, imageUrl) {
+  const session = await getSession(sessionId);
   if (!session) {
     return null;
   }
@@ -67,12 +143,16 @@ export function addCapture(sessionId, imageUrl) {
   };
 
   session.captures.push(capture);
-  persistStore();
+  if (hasKv) {
+    await kvSetJson(sessionKey(sessionId), session);
+  } else {
+    persistStore();
+  }
   return capture;
 }
 
-export function getCapturesSince(sessionId, cursor = 0) {
-  const session = getSession(sessionId);
+export async function getCapturesSince(sessionId, cursor = 0) {
+  const session = await getSession(sessionId);
   if (!session) {
     return null;
   }
