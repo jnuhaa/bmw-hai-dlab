@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/api/live-capture/:path*", "destination": "/api/live-capture/:path*" },
     { "source": "/api/canvas/:path*", "destination": "/api/canvas/:path*" },
-    { "source": "/api/extract/:path*", "destination": "/api/extract/:path*" }
+    { "source": "/api/extract/:path*", "destination": "/api/extract/:path*" },
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
