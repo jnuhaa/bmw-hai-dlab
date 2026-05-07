@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
+const defaultStateDir = process.env.VERCEL ? "/tmp/bmw-hai-dlab-state" : ".runtime";
 const stateDir = process.env.SERVER_STATE_DIR
   ? path.resolve(process.cwd(), process.env.SERVER_STATE_DIR)
-  : path.resolve(process.cwd(), ".runtime");
+  : path.resolve(process.cwd(), defaultStateDir);
 
 function ensureStateDir() {
   fs.mkdirSync(stateDir, { recursive: true });
