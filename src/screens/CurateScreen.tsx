@@ -975,8 +975,8 @@ export function CurateScreen() {
         });
       } catch (error) {
         console.error(error);
-        activeLiveSessionIdRef.current = null;
-        setLiveCaptureSessionId(null);
+        // Keep the current session id on transient poll errors.
+        // Resetting here causes rapid session churn and stale phone QR links.
       }
     }
 
