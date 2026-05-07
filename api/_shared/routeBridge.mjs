@@ -34,6 +34,11 @@ function buildApiUrl(prefix, pathSegments, query = {}) {
 }
 
 export function prepareApiRequestUrl(req, prefix) {
+  const existingUrl = typeof req.url === "string" ? req.url : "";
+  if (existingUrl.startsWith(prefix) || existingUrl.startsWith(`${prefix}/`)) {
+    return;
+  }
+
   const pathSegments = normalizePathSegments(req.query?.path);
   req.url = buildApiUrl(prefix, pathSegments, req.query ?? {});
 }
