@@ -144,14 +144,14 @@ export async function handleExtractRoute(req, res) {
         return;
       }
 
-      const job = createExtractionJob(normalizedPayload);
+      const job = await createExtractionJob(normalizedPayload);
       sendJson(res, 202, job);
       return;
     }
 
     const jobId = req.method === "GET" ? extractJobIdFromPathname(pathname) : null;
     if (req.method === "GET" && jobId) {
-      const job = getExtractionJob(jobId);
+      const job = await getExtractionJob(jobId);
       if (!job) {
         sendJson(res, 404, { error: "Extraction job not found." });
         return;

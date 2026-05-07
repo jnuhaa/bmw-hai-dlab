@@ -1,8 +1,11 @@
 import { extractDesignIngredients } from "./extractionService.mjs";
 import { readJsonState, writeJsonState } from "../shared/jsonStateStore.mjs";
+import { kv } from "@vercel/kv";
+import { createClient } from "redis";
 
 const JOB_TTL_MS = 1000 * 60 * 30;
 const MAX_JOBS = 120;
+const SHARED_JOB_TTL_SECONDS = Math.ceil(JOB_TTL_MS / 1000);
 
 const persistedState = readJsonState("extractionJobs", {
   jobs: [],
@@ -14,6 +17,16 @@ const extractionJobs = new Map(Array.isArray(persistedState.jobs) ? persistedSta
 const queuedJobIds = Array.isArray(persistedState.queuedJobIds) ? persistedState.queuedJobIds : [];
 const jobPayloadById = new Map(Array.isArray(persistedState.payloads) ? persistedState.payloads : []);
 let activeWorkerCount = 0;
+
+const hasKv = Boolean(
+  process.env.KV_REST_API_URL?.trim() ||
+    process.env.UPSTASH_REDIS_REST_URL?.trim(),
+);
+const storageRedisUrl = process.env.STORAGE_REDIS_URL?.trim() || "";
+const hasStorageRedis = storageRedisUrl.length > 0;
+const sharedEnabled = hasKv || hasStorageRedis;
+const sharedJobKey = (generationJobId) => `extract:job:${generationJobId}`;
+let redisClientPromise = null;
 
 function persistState() {
   writeJsonState("extractionJobs", {
@@ -33,6 +46,48 @@ function cloneJob(job) {
 
 function normalizeWorkflowType(workflowType) {
   return workflowType === "texture" || workflowType === "pattern" ? workflowType : "shape";
+}
+
+async function getStorageRedisClient() {
+  if (!hasStorageRedis) {
+    return null;
+  }
+  if (!redisClientPromise) {
+    const client = createClient({ url: storageRedisUrl });
+    redisClientPromise = client.connect().then(() => client);
+  }
+  return redisClientPromise;
+}
+
+async function saveSharedJob(job) {
+  const key = sharedJobKey(job.generationJobId);
+  if (hasKv) {
+    await kv.set(key, JSON.stringify(job), { ex: SHARED_JOB_TTL_SECONDS });
+    return;
+  }
+  if (hasStorageRedis) {
+    const client = await getStorageRedisClient();
+    await client?.set(key, JSON.stringify(job), { EX: SHARED_JOB_TTL_SECONDS });
+  }
+}
+
+async function readSharedJob(generationJobId) {
+  const key = sharedJobKey(generationJobId);
+  let raw = null;
+  if (hasKv) {
+    raw = await kv.get(key);
+  } else if (hasStorageRedis) {
+    const client = await getStorageRedisClient();
+    raw = await client?.get(key);
+  }
+  if (typeof raw !== "string" || raw.length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 function getQueueConcurrency() {
@@ -61,6 +116,13 @@ function transitionJob(job, status) {
   appendLifecycle(job, status);
   job.updatedAt = toIsoNow();
   persistState();
+}
+
+async function transitionSharedJob(job, status) {
+  job.status = status;
+  appendLifecycle(job, status);
+  job.updatedAt = toIsoNow();
+  await saveSharedJob(job);
 }
 
 function refreshQueueMetadata() {
@@ -180,6 +242,10 @@ function pumpQueue() {
 }
 
 export function createExtractionJob(payload) {
+  if (sharedEnabled) {
+    return createExtractionJobShared(payload);
+  }
+
   trimJobs();
 
   const generationJobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -225,6 +291,10 @@ export function createExtractionJob(payload) {
 }
 
 export function getExtractionJob(generationJobId) {
+  if (sharedEnabled) {
+    return getExtractionJobShared(generationJobId);
+  }
+
   trimJobs();
   refreshQueueMetadata();
   const job = extractionJobs.get(generationJobId);
@@ -237,4 +307,72 @@ export function getExtractionJob(generationJobId) {
 
 if (queuedJobIds.length > 0) {
   pumpQueue();
+}
+
+async function createExtractionJobShared(payload) {
+  const generationJobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const createdAt = toIsoNow();
+  const workflowType = normalizeWorkflowType(payload.workflowType);
+  const job = {
+    sourceAssetId: payload.sourceAssetId,
+    generationJobId,
+    status: "queued",
+    workflowType,
+    provider: undefined,
+    providerJobId: undefined,
+    fallbackReason: undefined,
+    errorMessage: undefined,
+    generatedOutputs: [],
+    parentChild: {
+      parentAssetId: payload.sourceAssetId,
+      childAssetIds: [],
+    },
+    createdAt,
+    updatedAt: createdAt,
+    lifecycle: [
+      {
+        status: "queued",
+        timestamp: createdAt,
+      },
+    ],
+    queuePosition: 0,
+    queueSize: 0,
+  };
+
+  await saveSharedJob(job);
+  await transitionSharedJob(job, "running");
+
+  try {
+    const result = await extractDesignIngredients({
+      ...payload,
+      workflowType,
+    });
+    const generatedOutputs = result.generatedOutputs.map((output) => ({
+      ...output,
+      parentAssetId: payload.sourceAssetId,
+    }));
+    job.provider = result.provider;
+    job.providerJobId = result.providerJobId;
+    job.fallbackReason = result.fallbackReason;
+    job.generatedOutputs = generatedOutputs;
+    job.parentChild = {
+      parentAssetId: payload.sourceAssetId,
+      childAssetIds: generatedOutputs.map((output) => output.id),
+    };
+    await transitionSharedJob(job, "completed");
+  } catch (error) {
+    job.errorMessage =
+      error instanceof Error ? error.message : "Generation failed unexpectedly.";
+    await transitionSharedJob(job, "failed");
+  }
+
+  return cloneJob(job);
+}
+
+async function getExtractionJobShared(generationJobId) {
+  const job = await readSharedJob(generationJobId);
+  if (!job) {
+    return null;
+  }
+  return cloneJob(job);
 }
