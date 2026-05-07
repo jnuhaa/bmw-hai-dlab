@@ -26,6 +26,18 @@ export function createSession() {
   return sessionId;
 }
 
+export function ensureSession(sessionId) {
+  if (typeof sessionId !== "string" || sessionId.length === 0) {
+    return null;
+  }
+  if (!sessions.has(sessionId)) {
+    sessions.set(sessionId, { captures: [] });
+    latestSessionId = sessionId;
+    persistStore();
+  }
+  return sessionId;
+}
+
 export function getSession(sessionId) {
   return sessions.get(sessionId) ?? null;
 }

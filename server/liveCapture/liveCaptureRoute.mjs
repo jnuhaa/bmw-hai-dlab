@@ -1,6 +1,7 @@
 import {
   addCapture,
   createSession,
+  ensureSession,
   getCapturesSince,
   getLatestSessionId,
   getSession,
@@ -65,7 +66,7 @@ export async function handleLiveCaptureRoute(req, res) {
     return;
   }
 
-  const resolvedSessionId = resolveSessionId(parsedPath.sessionId);
+  const resolvedSessionId = ensureSession(parsedPath.sessionId) ?? resolveSessionId(parsedPath.sessionId);
 
   if (!resolvedSessionId || !getSession(resolvedSessionId)) {
     sendJson(res, 404, { error: "Live capture session not found." });
