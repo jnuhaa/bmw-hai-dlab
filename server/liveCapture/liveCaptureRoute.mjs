@@ -5,6 +5,7 @@ import {
   getCapturesSince,
   getLatestSessionId,
   getSession,
+  isSharedLiveCaptureStoreEnabled,
   resolveSessionId,
 } from "./liveCaptureStore.mjs";
 
@@ -60,6 +61,13 @@ export async function handleLiveCaptureRoute(req, res) {
     return;
   }
 
+  if (pathname === "/status" && req.method === "GET") {
+    sendJson(res, 200, {
+      sharedStoreEnabled: isSharedLiveCaptureStoreEnabled(),
+    });
+    return;
+  }
+
   const parsedPath = parseSessionPath(pathname);
   if (!parsedPath) {
     sendJson(res, 404, { error: "Live capture route not found." });
@@ -67,7 +75,9 @@ export async function handleLiveCaptureRoute(req, res) {
   }
 
   const resolvedSessionId =
-    (await ensureSession(parsedPath.sessionId)) ?? (await resolveSessionId(parsedPath.sessionId));
+    parsedPath.action === "upload"
+      ? (await ensureSession(parsedPath.sessionId)) ?? (await resolveSessionId(parsedPath.sessionId))
+      : await resolveSessionId(parsedPath.sessionId);
 
   if (!resolvedSessionId || !(await getSession(resolvedSessionId))) {
     sendJson(res, 404, { error: "Live capture session not found." });

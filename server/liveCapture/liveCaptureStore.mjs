@@ -1,4 +1,5 @@
 import { readJsonState, writeJsonState } from "../shared/jsonStateStore.mjs";
+import { kv } from "@vercel/kv";
 
 const persisted = readJsonState("liveCaptureSessions", {
   latestSessionId: null,
@@ -9,11 +10,10 @@ const sessions = new Map(Array.isArray(persisted.sessions) ? persisted.sessions 
 let latestSessionId =
   typeof persisted.latestSessionId === "string" ? persisted.latestSessionId : null;
 
-const kvBaseUrl =
-  process.env.KV_REST_API_URL?.trim() || process.env.UPSTASH_REDIS_REST_URL?.trim() || "";
-const kvToken =
-  process.env.KV_REST_API_TOKEN?.trim() || process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || "";
-const hasKv = Boolean(kvBaseUrl && kvToken);
+const hasKv = Boolean(
+  process.env.KV_REST_API_URL?.trim() ||
+    process.env.UPSTASH_REDIS_REST_URL?.trim(),
+);
 
 const LATEST_KEY = "live-capture:latest";
 const sessionKey = (sessionId) => `live-capture:session:${sessionId}`;
@@ -25,23 +25,8 @@ function persistStore() {
   });
 }
 
-async function kvCommand(...parts) {
-  const encoded = parts.map((part) => encodeURIComponent(String(part))).join("/");
-  const response = await fetch(`${kvBaseUrl}/${encoded}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${kvToken}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`KV command failed (${response.status})`);
-  }
-  const body = await response.json();
-  return body?.result ?? null;
-}
-
 async function kvGetJson(key) {
-  const raw = await kvCommand("get", key);
+  const raw = await kv.get(key);
   if (typeof raw !== "string" || raw.length === 0) {
     return null;
   }
@@ -53,7 +38,7 @@ async function kvGetJson(key) {
 }
 
 async function kvSetJson(key, value) {
-  await kvCommand("set", key, JSON.stringify(value));
+  await kv.set(key, JSON.stringify(value));
 }
 
 export async function createSession() {
@@ -62,7 +47,7 @@ export async function createSession() {
     await kvSetJson(sessionKey(sessionId), {
       captures: [],
     });
-    await kvCommand("set", LATEST_KEY, sessionId);
+    await kv.set(LATEST_KEY, sessionId);
     return sessionId;
   }
 
@@ -84,7 +69,7 @@ export async function ensureSession(sessionId) {
     const existing = await kvGetJson(key);
     if (!existing) {
       await kvSetJson(key, { captures: [] });
-      await kvCommand("set", LATEST_KEY, sessionId);
+      await kv.set(LATEST_KEY, sessionId);
     }
     return sessionId;
   }
@@ -106,10 +91,14 @@ export async function getSession(sessionId) {
 
 export async function getLatestSessionId() {
   if (hasKv) {
-    const latest = await kvCommand("get", LATEST_KEY);
+    const latest = await kv.get(LATEST_KEY);
     return typeof latest === "string" && latest.length > 0 ? latest : null;
   }
   return latestSessionId;
+}
+
+export function isSharedLiveCaptureStoreEnabled() {
+  return hasKv;
 }
 
 export async function resolveSessionId(sessionId) {
