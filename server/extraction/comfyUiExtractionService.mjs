@@ -1,6 +1,13 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  defaultPollIntervalMs,
+  formatComfy429Hint,
+  pollCloudJobStatus,
+  pollHistoryForOutputs,
+  sleep,
+} from "../shared/comfyCloudPolling.mjs";
 
 const WORKFLOWS_DIR_URL = new URL("../../comfy/workflows/", import.meta.url);
 const DEFAULT_WORKFLOW_BASENAME = "sculptural_essence_3way_api.json";
@@ -124,8 +131,12 @@ function normalizeBaseUrl(url) {
   return String(url ?? "").replace(/\/$/, "");
 }
 
-/** Explains 502/503/504 — wording differs for Comfy Cloud vs self-hosted ComfyUI. */
+/** Explains 502/503/504/429 — wording differs for Comfy Cloud vs self-hosted ComfyUI. */
 function formatComfyUnavailableHint(status, baseUrl) {
+  if (status === 429) {
+    return formatComfy429Hint();
+  }
+
   if (status === 502 || status === 503 || status === 504) {
     if (isCloudBaseUrl(baseUrl)) {
       return " Bad gateway: Comfy Cloud could not complete the request. Confirm COMFYUI_API_KEY (or COMFY_CLOUD_API_KEY), set COMFYUI_CLOUD_MODE=true if you use a custom cloud endpoint, and check https://cloud.comfy.org availability.";
@@ -1188,32 +1199,10 @@ function promptHistoryHasOutputsForAllNodes(promptHistory, nodeIds) {
   });
 }
 
-function parseCloudFailureReason(statusPayload, fallbackStatus) {
-  const direct = statusPayload?.message ?? statusPayload?.error ?? statusPayload?.error_message;
-  if (typeof direct === "string" && direct.trim().length > 0) {
-    const trimmed = direct.trim();
-    if (trimmed.startsWith("{")) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (typeof parsed?.exception_message === "string" && parsed.exception_message.length > 0) {
-          return parsed.exception_message;
-        }
-        if (typeof parsed?.message === "string" && parsed.message.length > 0) {
-          return parsed.message;
-        }
-      } catch {
-        return trimmed;
-      }
-    }
-    return trimmed;
-  }
-
-  return fallbackStatus;
-}
-
 async function waitForOutputs(baseUrl, promptId, preferredOutputNodeIds = null) {
   const timeoutMs = Number(process.env.COMFYUI_POLL_TIMEOUT_MS ?? 60000);
-  const intervalMs = Number(process.env.COMFYUI_POLL_INTERVAL_MS ?? 1500);
+  const cloudMode = isCloudBaseUrl(baseUrl);
+  const intervalMs = defaultPollIntervalMs(cloudMode);
   const outputNodeId = process.env.COMFYUI_OUTPUT_NODE_ID ?? "8";
   const envOutputIds = parseNodeIdList(process.env.COMFYUI_OUTPUT_NODE_IDS);
   const outputNodeIds =
@@ -1224,52 +1213,79 @@ async function waitForOutputs(baseUrl, promptId, preferredOutputNodeIds = null) 
         : [];
   const historyPath = getApiPath(baseUrl, `/history/${promptId}`, `/api/history_v2/${promptId}`);
   const statusPath = getApiPath(baseUrl, "", `/api/job/${promptId}/status`);
-  const cloudMode = isCloudBaseUrl(baseUrl);
   const startedAt = Date.now();
-
-  while (Date.now() - startedAt < timeoutMs) {
-    let images = [];
-    const response = await fetch(`${baseUrl}${historyPath}`, {
-      headers: getAuthHeaders(baseUrl),
+  const rateLimitState = { attempt: 0 };
+  const authHeaders = () => getAuthHeaders(baseUrl);
+  const pollHistory = () =>
+    pollHistoryForOutputs({
+      baseUrl,
+      promptId,
+      cloudMode,
+      historyPath,
+      headers: authHeaders(),
+      outputNodeId,
+      outputNodeIds,
+      extractImagesFromHistory,
+      extractImagesFromHistoryByNodeIds,
+      promptHistoryHasOutputsForAllNodes,
+      throwHttpError: throwComfyHttpError,
+      rateLimitState,
     });
 
-    if (response.ok) {
-      const payload = await response.json();
-      const promptHistory = payload[promptId] ?? payload;
-      images =
-        outputNodeIds.length > 0
-          ? extractImagesFromHistoryByNodeIds(promptHistory, outputNodeIds)
-          : extractImagesFromHistory(promptHistory, outputNodeId);
-
-      if (outputNodeIds.length > 0) {
-        if (promptHistoryHasOutputsForAllNodes(promptHistory, outputNodeIds)) {
-          return images;
-        }
-      } else if (images.length > 0) {
-        return images;
-      }
-    } else if (!cloudMode || response.status !== 404) {
-      throwComfyHttpError("ComfyUI /history", response, baseUrl);
-    }
-
+  while (Date.now() - startedAt < timeoutMs) {
     if (cloudMode) {
-      const statusResponse = await fetch(`${baseUrl}${statusPath}`, {
-        headers: getAuthHeaders(baseUrl),
+      const statusResult = await pollCloudJobStatus({
+        baseUrl,
+        statusPath,
+        headers: authHeaders(),
+        throwHttpError: throwComfyHttpError,
+        rateLimitState,
       });
 
-      if (!statusResponse.ok) {
-        throwComfyHttpError("ComfyUI cloud status", statusResponse, baseUrl);
+      if (statusResult.type === "rate_limited") {
+        debugLog("Comfy cloud status rate limited, backing off", {
+          backoffMs: statusResult.backoffMs,
+          promptId,
+        });
+        await sleep(statusResult.backoffMs);
+        continue;
       }
 
-      const statusPayload = await statusResponse.json();
-      const status = String(statusPayload.status ?? "");
-      if (status === "failed" || status === "cancelled") {
-        const reason = parseCloudFailureReason(statusPayload, status);
-        throw new Error(`ComfyUI cloud job ${status}: ${reason}`);
+      if (statusResult.type === "completed") {
+        const historyResult = await pollHistory();
+        if (historyResult.type === "done") {
+          return historyResult.images;
+        }
+        if (historyResult.type === "rate_limited") {
+          debugLog("Comfy history rate limited after job completed, backing off", {
+            backoffMs: historyResult.backoffMs,
+            promptId,
+          });
+          await sleep(historyResult.backoffMs);
+          continue;
+        }
+        await sleep(intervalMs);
+        continue;
       }
+
+      await sleep(intervalMs);
+      continue;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const historyResult = await pollHistory();
+    if (historyResult.type === "done") {
+      return historyResult.images;
+    }
+    if (historyResult.type === "rate_limited") {
+      debugLog("Comfy history rate limited, backing off", {
+        backoffMs: historyResult.backoffMs,
+        promptId,
+      });
+      await sleep(historyResult.backoffMs);
+      continue;
+    }
+
+    await sleep(intervalMs);
   }
 
   throw new Error("ComfyUI generation timed out before outputs were available.");
@@ -1364,6 +1380,33 @@ function buildOutputTags(sourceLabels, directionLabel) {
   return tags.slice(0, 4);
 }
 
+function readWorkflowCheckpointName(workflowTemplate) {
+  const nodeId = findNodeIdByClassType(workflowTemplate, "CheckpointLoaderSimple") ?? "1";
+  const ckpt = workflowTemplate?.[nodeId]?.inputs?.ckpt_name;
+  return typeof ckpt === "string" && ckpt.trim().length > 0 ? ckpt.trim() : null;
+}
+
+function resolveCheckpointName(workflowTemplate) {
+  const workflowCheckpoint = readWorkflowCheckpointName(workflowTemplate);
+  const envCheckpoint = process.env.COMFYUI_CHECKPOINT_NAME?.trim();
+
+  if (isTrue(process.env.COMFYUI_USE_WORKFLOW_CHECKPOINT)) {
+    return workflowCheckpoint ?? envCheckpoint ?? "dreamshaper_8.safetensors";
+  }
+
+  if (envCheckpoint) {
+    if (workflowCheckpoint && envCheckpoint !== workflowCheckpoint) {
+      debugLog(
+        "WARNING: COMFYUI_CHECKPOINT_NAME differs from workflow JSON ckpt_name; outputs may not match JSON tuning. Set COMFYUI_USE_WORKFLOW_CHECKPOINT=true or align the checkpoint with the workflow file.",
+        { envCheckpoint, workflowCheckpoint },
+      );
+    }
+    return envCheckpoint;
+  }
+
+  return workflowCheckpoint ?? "dreamshaper_8.safetensors";
+}
+
 export async function extractWithComfyUiProvider(payload) {
   const baseUrl = ensure(
     process.env.COMFYUI_BASE_URL,
@@ -1414,7 +1457,17 @@ export async function extractWithComfyUiProvider(payload) {
     isDataUrl: sourceImageUrl.startsWith("data:"),
   });
   const negativePrompt = buildNegativePrompt(workflowType, resolvedWorkflowBasename);
-  const checkpoint = process.env.COMFYUI_CHECKPOINT_NAME ?? "dreamshaper_8.safetensors";
+  const checkpoint = resolveCheckpointName(workflowTemplate);
+  const preserveEmbeddedPrompts = shouldPreserveEmbeddedWorkflowPrompts({
+    workflowFileBasename: resolvedWorkflowBasename,
+    loadedWorkflowBasename: resolvedWorkflowBasename,
+  });
+  debugLog("Workflow prompt mode", {
+    resolvedWorkflowBasename,
+    preserveEmbeddedJsonPrompts: preserveEmbeddedPrompts,
+    checkpoint,
+    workflowJsonCheckpoint: readWorkflowCheckpointName(workflowTemplate),
+  });
   const filledWorkflow = prepareWorkflow({
     workflowTemplate,
     imagePath: uploadedImage,

@@ -11,6 +11,13 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getBrandAppendFor } from "./convergeBrandContext.mjs";
+import {
+  defaultPollIntervalMs,
+  formatComfy429Hint,
+  pollCloudJobStatus,
+  pollHistoryForOutputs,
+  sleep,
+} from "../shared/comfyCloudPolling.mjs";
 
 export const STYLIZE_WORKFLOWS_DIR = fileURLToPath(new URL("../../comfy/workflows/", import.meta.url));
 export const DEFAULT_STYLIZE_WORKFLOW_BASENAME = "extract-image-api.json";
@@ -66,7 +73,8 @@ function getApiPath(baseUrl, localPath, cloudPath = null) {
 
 function throwComfyHttpError(label, response, baseUrl) {
   const status = response.status;
-  throw new Error(`${label} failed with HTTP ${status} (${baseUrl})`);
+  const hint = status === 429 ? formatComfy429Hint() : "";
+  throw new Error(`${label} failed with HTTP ${status} (${baseUrl}).${hint}`);
 }
 
 /** Minimal 64×64 white PNG (base64) for text-only stylize → img2img. */
@@ -295,43 +303,71 @@ function extractImagesFromHistory(promptHistory, outputNodeId) {
 
 async function waitForOutputImage(baseUrl, promptId, outputNodeId) {
   const timeoutMs = Number(process.env.COMFYUI_CANVAS_STYLIZE_TIMEOUT_MS ?? process.env.COMFYUI_POLL_TIMEOUT_MS ?? 120000);
-  const intervalMs = Number(process.env.COMFYUI_POLL_INTERVAL_MS ?? 1500);
+  const cloudMode = isCloudBaseUrl(baseUrl);
+  const intervalMs = defaultPollIntervalMs(cloudMode);
   const historyPath = getApiPath(baseUrl, `/history/${promptId}`, `/api/history_v2/${promptId}`);
   const statusPath = getApiPath(baseUrl, "", `/api/job/${promptId}/status`);
-  const cloudMode = isCloudBaseUrl(baseUrl);
   const startedAt = Date.now();
-
-  while (Date.now() - startedAt < timeoutMs) {
-    const response = await fetch(`${baseUrl}${historyPath}`, {
-      headers: getAuthHeaders(baseUrl),
+  const rateLimitState = { attempt: 0 };
+  const authHeaders = () => getAuthHeaders(baseUrl);
+  const pollHistory = () =>
+    pollHistoryForOutputs({
+      baseUrl,
+      promptId,
+      cloudMode,
+      historyPath,
+      headers: authHeaders(),
+      outputNodeId,
+      outputNodeIds: [],
+      extractImagesFromHistory,
+      extractImagesFromHistoryByNodeIds: () => [],
+      promptHistoryHasOutputsForAllNodes: () => false,
+      throwHttpError: throwComfyHttpError,
+      rateLimitState,
     });
 
-    if (response.ok) {
-      const payload = await response.json();
-      const promptHistory = payload[promptId] ?? payload;
-      const images = extractImagesFromHistory(promptHistory, outputNodeId);
-      if (images.length > 0) {
-        return images[0];
-      }
-    } else if (!cloudMode || response.status !== 404) {
-      throwComfyHttpError("ComfyUI /history", response, baseUrl);
-    }
-
+  while (Date.now() - startedAt < timeoutMs) {
     if (cloudMode) {
-      const statusResponse = await fetch(`${baseUrl}${statusPath}`, {
-        headers: getAuthHeaders(baseUrl),
+      const statusResult = await pollCloudJobStatus({
+        baseUrl,
+        statusPath,
+        headers: authHeaders(),
+        throwHttpError: throwComfyHttpError,
+        rateLimitState,
       });
-      if (statusResponse.ok) {
-        const statusPayload = await statusResponse.json();
-        const status = String(statusPayload.status ?? "");
-        if (status === "failed" || status === "cancelled") {
-          const reason = statusPayload.message ?? status;
-          throw new Error(`ComfyUI cloud job ${status}: ${reason}`);
-        }
+
+      if (statusResult.type === "rate_limited") {
+        await sleep(statusResult.backoffMs);
+        continue;
       }
+
+      if (statusResult.type === "completed") {
+        const historyResult = await pollHistory();
+        if (historyResult.type === "done" && historyResult.images.length > 0) {
+          return historyResult.images[0];
+        }
+        if (historyResult.type === "rate_limited") {
+          await sleep(historyResult.backoffMs);
+          continue;
+        }
+        await sleep(intervalMs);
+        continue;
+      }
+
+      await sleep(intervalMs);
+      continue;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const historyResult = await pollHistory();
+    if (historyResult.type === "done" && historyResult.images.length > 0) {
+      return historyResult.images[0];
+    }
+    if (historyResult.type === "rate_limited") {
+      await sleep(historyResult.backoffMs);
+      continue;
+    }
+
+    await sleep(intervalMs);
   }
 
   throw new Error("ComfyUI canvas stylize timed out waiting for output.");
