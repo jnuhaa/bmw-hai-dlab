@@ -27,13 +27,20 @@ export function computeRateLimitBackoffMs(attempt, response) {
   return Math.min(CLOUD_RATE_LIMIT_BACKOFF_MAX_MS, CLOUD_RATE_LIMIT_INITIAL_MS * 2 ** exponent);
 }
 
+/** Comfy Cloud job status endpoint returns `success` when done; OpenAPI also documents `completed`. */
 export function isCloudJobCompleted(status) {
-  return status === "completed";
+  const normalized = String(status ?? "").toLowerCase();
+  return normalized === "completed" || normalized === "success";
 }
 
-/** Comfy Cloud OpenAPI uses `error`; legacy integrations may still emit `failed`. */
+/** Comfy Cloud uses `error` on /api/job/.../status; history may use `failed`. */
 export function isCloudJobTerminalFailure(status) {
-  return status === "error" || status === "cancelled" || status === "failed";
+  const normalized = String(status ?? "").toLowerCase();
+  return (
+    normalized === "error" ||
+    normalized === "cancelled" ||
+    normalized === "failed"
+  );
 }
 
 export function parseCloudFailureReason(statusPayload, fallbackStatus) {

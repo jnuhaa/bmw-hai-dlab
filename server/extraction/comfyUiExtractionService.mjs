@@ -1200,11 +1200,12 @@ function promptHistoryHasOutputsForAllNodes(promptHistory, nodeIds) {
 }
 
 async function waitForOutputs(baseUrl, promptId, preferredOutputNodeIds = null) {
+  const cloudMode = isCloudBaseUrl(baseUrl);
   const timeoutMs = Number(
     process.env.COMFYUI_POLL_TIMEOUT_MS ?? (cloudMode ? 300000 : 60000),
   );
-  const cloudMode = isCloudBaseUrl(baseUrl);
   const intervalMs = defaultPollIntervalMs(cloudMode);
+  const postCompleteHistoryMs = Number(process.env.COMFYUI_POST_COMPLETE_HISTORY_MS ?? 120000);
   const outputNodeId = process.env.COMFYUI_OUTPUT_NODE_ID ?? "8";
   const envOutputIds = parseNodeIdList(process.env.COMFYUI_OUTPUT_NODE_IDS);
   const outputNodeIds =
@@ -1254,22 +1255,48 @@ async function waitForOutputs(baseUrl, promptId, preferredOutputNodeIds = null) 
       }
 
       if (statusResult.type === "completed") {
-        const historyResult = await pollHistory();
-        if (historyResult.type === "done") {
-          return historyResult.images;
+        const historyDeadline = Math.min(Date.now() + postCompleteHistoryMs, startedAt + timeoutMs);
+        while (Date.now() < historyDeadline) {
+          const historyResult = await pollHistory();
+          if (historyResult.type === "done") {
+            debugLog("ComfyUI outputs resolved after cloud job success", {
+              promptId,
+              outputCount: historyResult.images.length,
+            });
+            return historyResult.images;
+          }
+          if (historyResult.type === "rate_limited") {
+            debugLog("Comfy history rate limited after job completed, backing off", {
+              backoffMs: historyResult.backoffMs,
+              promptId,
+            });
+            await sleep(historyResult.backoffMs);
+            continue;
+          }
+          await sleep(intervalMs);
         }
-        if (historyResult.type === "rate_limited") {
-          debugLog("Comfy history rate limited after job completed, backing off", {
-            backoffMs: historyResult.backoffMs,
-            promptId,
-          });
-          await sleep(historyResult.backoffMs);
-          continue;
-        }
-        await sleep(intervalMs);
+        debugLog("Comfy cloud job succeeded but history outputs not ready yet", { promptId });
         continue;
       }
 
+      // Fallback: some accounts return outputs in history before job status flips to success.
+      if (Date.now() - startedAt > intervalMs * 3) {
+        const historyResult = await pollHistory();
+        if (historyResult.type === "done") {
+          debugLog("ComfyUI outputs resolved via history before job status success", { promptId });
+          return historyResult.images;
+        }
+        if (historyResult.type === "rate_limited") {
+          await sleep(historyResult.backoffMs);
+          continue;
+        }
+      }
+
+      debugLog("Comfy cloud job in progress", {
+        promptId,
+        status: statusResult.status,
+        elapsedMs: Date.now() - startedAt,
+      });
       await sleep(intervalMs);
       continue;
     }
