@@ -1,5 +1,29 @@
-import { createExtractionJob, getExtractionJob } from "./extractionJobService.mjs";
+import {
+  createExtractionJob,
+  getExtractionJob,
+  isSharedExtractionStoreEnabled,
+  processExtractionJobShared,
+} from "./extractionJobService.mjs";
 import { basename } from "node:path";
+
+async function scheduleExtractionProcessing(generationJobId, payload) {
+  const run = () =>
+    processExtractionJobShared(generationJobId, payload).catch((error) => {
+      console.error("[extract] Background extraction job failed", {
+        generationJobId,
+        error: error instanceof Error ? error.message : error,
+      });
+    });
+
+  try {
+    const { waitUntil } = await import("@vercel/functions");
+    waitUntil(run());
+    return;
+  } catch {
+    // Local dev or non-Vercel runtime: fire-and-forget like the in-memory queue.
+    void run();
+  }
+}
 
 async function readJsonBody(req) {
   const chunks = [];
@@ -145,6 +169,9 @@ export async function handleExtractRoute(req, res) {
       }
 
       const job = await createExtractionJob(normalizedPayload);
+      if (isSharedExtractionStoreEnabled()) {
+        await scheduleExtractionProcessing(job.generationJobId, normalizedPayload);
+      }
       sendJson(res, 202, job);
       return;
     }

@@ -309,6 +309,10 @@ if (queuedJobIds.length > 0) {
   pumpQueue();
 }
 
+export function isSharedExtractionStoreEnabled() {
+  return sharedEnabled;
+}
+
 async function createExtractionJobShared(payload) {
   const generationJobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const createdAt = toIsoNow();
@@ -335,11 +339,26 @@ async function createExtractionJobShared(payload) {
         timestamp: createdAt,
       },
     ],
-    queuePosition: 0,
-    queueSize: 0,
+    queuePosition: 1,
+    queueSize: 1,
   };
 
   await saveSharedJob(job);
+  return cloneJob(job);
+}
+
+/** Runs Comfy/mock extraction and persists job status (serverless background worker). */
+export async function processExtractionJobShared(generationJobId, payload) {
+  const job = await readSharedJob(generationJobId);
+  if (!job) {
+    return;
+  }
+
+  if (job.status !== "queued" && job.status !== "running") {
+    return;
+  }
+
+  const workflowType = normalizeWorkflowType(payload.workflowType ?? job.workflowType);
   await transitionSharedJob(job, "running");
 
   try {
@@ -365,8 +384,6 @@ async function createExtractionJobShared(payload) {
       error instanceof Error ? error.message : "Generation failed unexpectedly.";
     await transitionSharedJob(job, "failed");
   }
-
-  return cloneJob(job);
 }
 
 async function getExtractionJobShared(generationJobId) {

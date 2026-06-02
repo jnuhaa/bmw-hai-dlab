@@ -1200,7 +1200,9 @@ function promptHistoryHasOutputsForAllNodes(promptHistory, nodeIds) {
 }
 
 async function waitForOutputs(baseUrl, promptId, preferredOutputNodeIds = null) {
-  const timeoutMs = Number(process.env.COMFYUI_POLL_TIMEOUT_MS ?? 60000);
+  const timeoutMs = Number(
+    process.env.COMFYUI_POLL_TIMEOUT_MS ?? (cloudMode ? 300000 : 60000),
+  );
   const cloudMode = isCloudBaseUrl(baseUrl);
   const intervalMs = defaultPollIntervalMs(cloudMode);
   const outputNodeId = process.env.COMFYUI_OUTPUT_NODE_ID ?? "8";

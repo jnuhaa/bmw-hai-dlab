@@ -1,4 +1,12 @@
 {
+  "functions": {
+    "api/extract/index.mjs": {
+      "maxDuration": 300
+    },
+    "api/extract/[...path].mjs": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     { "source": "/api/live-capture/:path*", "destination": "/api/live-capture/:path*" },
     { "source": "/api/canvas/:path*", "destination": "/api/canvas/:path*" },

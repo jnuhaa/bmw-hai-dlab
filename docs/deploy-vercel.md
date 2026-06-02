@@ -79,14 +79,14 @@ Use this after each production deploy to ensure picture import, ComfyUI workflow
 
    Verify `collabConfigured` is `true`.
 
-3. **ComfyUI extraction/stylize flow**
-   - Ensure these env vars are set in Vercel:
-     - `EXTRACTION_PROVIDER=comfyui`
-     - `COMFYUI_BASE_URL=...`
-     - any required `COMFYUI_API_KEY` / workflow vars
-   - Trigger Extract (Curate) or Stylize (Converge).
-   - Expected: generated images returned; no provider connectivity errors.
-   - If failures appear, first verify Vercel can reach `COMFYUI_BASE_URL` from server-side runtime.
+3. **ComfyUI extraction (async jobs)**
+   - Extraction returns **HTTP 202** immediately; Comfy runs in the background via `waitUntil` (requires KV or `STORAGE_REDIS_URL`).
+   - Set on Production: `EXTRACTION_PROVIDER=comfyui`, `COMFYUI_BASE_URL`, `COMFYUI_API_KEY`, `COMFYUI_CLOUD_MODE=true` (for Comfy Cloud).
+   - For 3-way Curate workflows on Comfy Cloud, use `COMFYUI_POLL_TIMEOUT_MS=300000` and `COMFYUI_POLL_INTERVAL_MS=4000`.
+   - `api/extract` is configured for up to **300s** `maxDuration` so background extraction can finish.
+
+   - Trigger Extract (Curate) or Stylize (Converge); expect generated images after polling completes.
+   - If failures appear, verify Vercel can reach `COMFYUI_BASE_URL` and check job `errorMessage` via `GET /api/extract/<jobId>`.
 
 4. **Phone import/session pairing**
    - Open app on desktop and phone using the same origin.
