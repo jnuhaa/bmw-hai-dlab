@@ -109,6 +109,38 @@ export const FRAME_MIN_OUTER_WIDTH = 180;
 /** Keeps at least ~64px of content height below the title bar. */
 export const FRAME_MIN_OUTER_HEIGHT = FRAME_TITLE_HEIGHT + 64;
 
+export function maxFrameChildBottomY(itemsList: CanvasItem[], frameId: string): number {
+  let maxBottom = 0;
+  for (const item of itemsList) {
+    if ("parentId" in item && item.parentId === frameId) {
+      maxBottom = Math.max(maxBottom, item.y + (item.height ?? 0));
+    }
+  }
+  return maxBottom;
+}
+
+/** Grow frame height so nested items stay inside the frame body (brainstorm stacks downward). */
+export function expandFrameToFitChildren(
+  itemsList: CanvasItem[],
+  frameId: string,
+  paddingPx = 24,
+): CanvasItem[] {
+  const frame = getFrameById(itemsList, frameId);
+  if (!frame) {
+    return itemsList;
+  }
+  const bottom = maxFrameChildBottomY(itemsList, frameId);
+  const minContentH = bottom + paddingPx;
+  const neededOuterH = FRAME_TITLE_HEIGHT + minContentH + 16;
+  const nextHeight = Math.max(frame.height, neededOuterH, FRAME_MIN_OUTER_HEIGHT);
+  if (nextHeight === frame.height) {
+    return itemsList;
+  }
+  return itemsList.map((item) =>
+    item.id === frameId && item.type === "frame" ? { ...item, height: nextHeight } : item,
+  );
+}
+
 /**
  * After a drag, re-evaluate frame nesting: an item nests in the topmost frame (later in `items` = higher z)
  * whose content rect contains the item's world bounding-box center; otherwise it is un-nested to world coords.

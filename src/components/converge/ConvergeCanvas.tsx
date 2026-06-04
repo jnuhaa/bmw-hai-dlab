@@ -40,6 +40,8 @@ import {
 import {
   applyFrameDropNesting,
   detachChildrenOutsideFrameBodies,
+  expandFrameToFitChildren,
+  maxFrameChildBottomY,
   FRAME_MIN_OUTER_HEIGHT,
   FRAME_MIN_OUTER_WIDTH,
   FRAME_TITLE_HEIGHT,
@@ -69,7 +71,11 @@ import {
   findNonOverlappingPosition,
   type AxisAlignedRect,
 } from "./convergePlacement";
-import { estimateStickyHeightPx, stickyHeightFromTextareaScrollPx } from "./convergeStickyMeasure";
+import {
+  estimateStickyHeightPx,
+  isStickyTextClamped,
+  stickyHeightFromTextareaScrollPx,
+} from "./convergeStickyMeasure";
 
 export const CONVERGE_ZOOM_MIN = 0.25;
 export const CONVERGE_ZOOM_MAX = 2;
@@ -168,6 +174,8 @@ function ConvergeStickyTextarea({
       onHeightSync(item.id, h);
     }
   }, [item.content, item.width, item.id, item.height, onHeightSync]);
+  const clamped = isStickyTextClamped(item.content, item.width || 220);
+
   return (
     <textarea
       ref={ref}
@@ -175,6 +183,7 @@ function ConvergeStickyTextarea({
       value={item.content}
       onChange={(e) => onContentChange(item.id, e.target.value)}
       placeholder="Type something..."
+      title={clamped ? "Scroll inside the note to read full text" : undefined}
       style={{ color: "inherit" }}
     />
   );
@@ -319,16 +328,6 @@ Summarize the brainstorm and agree on ONE direction, final concept, or next step
 Transcript:
 ${history}
 `.trim();
-}
-
-function maxFrameChildBottomY(itemsList: CanvasItem[], frameId: string): number {
-  let m = 0;
-  for (const i of itemsList) {
-    if ("parentId" in i && i.parentId === frameId) {
-      m = Math.max(m, i.y + (i.height ?? 0));
-    }
-  }
-  return m;
 }
 
 function getBottomAnchor(item: CanvasItem) {
@@ -2194,6 +2193,7 @@ export function ConvergeCanvas({
           if (myGen !== brainstormGenRef.current) {
             return;
           }
+          setItems((prev) => expandFrameToFitChildren(prev, frameId));
           await playBrainstormPhases(restPhases, normalizeMainWp, "var(--accent)");
           if (myGen !== brainstormGenRef.current) {
             return;
@@ -2250,7 +2250,11 @@ export function ConvergeCanvas({
           }
         }
 
-        nextY = maxFrameChildBottomY(itemsRef.current, frameId) + 16;
+        setItems((prev) => {
+          const expanded = expandFrameToFitChildren(prev, frameId);
+          nextY = maxFrameChildBottomY(expanded, frameId) + 16;
+          return expanded;
+        });
       }
 
       if (myGen !== brainstormGenRef.current) {
@@ -2273,7 +2277,6 @@ export function ConvergeCanvas({
         "Agreed direction: consolidate around the strongest shared themes from the thread.";
       const conclusionText = `Conclusion: ${conclusion}`;
       const stickyW = Math.min(220, contentW - 16);
-      const conclusionH = estimateStickyHeightPx(conclusionText, stickyW);
       const conclusionId = randomId();
       const conclusionY = maxFrameChildBottomY(itemsRef.current, frameId) + 16;
 
@@ -2286,13 +2289,22 @@ export function ConvergeCanvas({
           x: 8,
           y: conclusionY,
           width: stickyW,
-          height: conclusionH,
+          height: estimateStickyHeightPx("", stickyW),
           content: "",
           role: "insight",
         },
       ]);
 
       await typewriterStickyContent(conclusionId, conclusionText, myGen, brainstormGenRef, setItems, 14);
+
+      setItems((prev) => {
+        const expanded = expandFrameToFitChildren(prev, frameId);
+        return expanded.map((it) =>
+          it.id === conclusionId && it.type === "sticky"
+            ? { ...it, height: estimateStickyHeightPx(conclusionText, stickyW) }
+            : it,
+        );
+      });
 
       setAiStatus("");
     } catch (e) {
