@@ -1444,9 +1444,9 @@ export function CurateScreen() {
             <div className="memory-sphere-controls-cluster">
                 <div className="memory-sphere-context-stack">
                   <div className="memory-sphere-context-head">
-                    <span className="section-label" id="collect-label">
+                    {/*<span className="section-label" id="collect-label">
                       AI erweitert Wahrnehmung.
-                    </span>
+                    </span>*/}
                     <div className="memory-sphere-constraints-toolbar">
                       <button
                         type="button"
@@ -1603,9 +1603,9 @@ export function CurateScreen() {
               <div className="memory-sphere-controls-cluster">
                 <div className="memory-sphere-context-stack">
                   <div className="memory-sphere-context-head">
-                    <span className="section-label" id="context-label">
+                    {/*<span className="section-label" id="context-label">
                         AI erweitert Möglichkeiten.
-                    </span>
+                    </span>*/}
                     <div className="memory-sphere-constraints-toolbar">
                       <button
                         type="button"
@@ -1783,9 +1783,9 @@ export function CurateScreen() {
                 <div className="memory-sphere-context-stack">
                   <div className="memory-sphere-context-head memory-sphere-context-head--converge">
                     <div className="memory-sphere-context-headline">
-                      <span className="section-label" id="context-label">
+                      {/*<span className="section-label" id="context-label">
                         AI beschleunigt Qualität.
-                      </span>
+                      </span>*/}
                     </div>
                   </div>
                 </div>
